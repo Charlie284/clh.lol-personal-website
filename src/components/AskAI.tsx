@@ -40,7 +40,7 @@ export default function AskAI() {
         popoverTarget={id}
         aria-label="Ask AI about Charlie"
         onClick={() => setCopyState("idle")}
-        className="fixed bottom-5 right-5 z-[110] flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors hover:border-white/20 hover:text-white md:right-24"
+        className="fixed bottom-5 right-5 z-[110] flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#050505]/95 px-4 py-3 backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors hover:border-white/20 hover:text-white md:right-24"
       >
         <Sparkles size={14} strokeWidth={1.8} aria-hidden="true" />
         <span>Ask AI</span>

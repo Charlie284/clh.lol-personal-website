@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   motion,
@@ -12,6 +12,7 @@ import {
 import Nav from "./Nav";
 import CommandPalette from "./CommandPalette";
 import AskAI from "./AskAI";
+import PageErrorBoundary from "./PageErrorBoundary";
 
 const Cursor = lazy(() => import("./Cursor"));
 const InteractiveDots = lazy(() => import("./InteractiveDots"));
@@ -33,6 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const [isMobile, setIsMobile] = useState(false);
   const [pointerEffectsEnabled, setPointerEffectsEnabled] = useState(false);
+  const previousPathname = useRef<string | null>(null);
 
   const beamX = useTransform(scrollY, [0, 2000], ["-20%", "20%"]);
 
@@ -71,10 +73,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Reset scroll on location change
+  // A shared fragment must win over the usual page reset. Lazy routes and
+  // article content can mount after navigation, so wait for their target.
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+    const pathnameChanged = previousPathname.current !== location.pathname;
+    previousPathname.current = location.pathname;
+    if (!location.hash) {
+      if (pathnameChanged) window.scrollTo(0, 0);
+      return;
+    }
+
+    let targetId: string;
+    try {
+      targetId = decodeURIComponent(location.hash.slice(1));
+    } catch {
+      return;
+    }
+
+    const scrollToFragment = () => {
+      const target = document.getElementById(targetId);
+      if (!target || (target.id !== "main-content" && !target.closest('[data-route-ready="true"]'))) return false;
+      target.scrollIntoView({ block: "start", behavior: "instant" });
+      return true;
+    };
+
+    if (scrollToFragment()) return;
+    const main = document.getElementById("main-content");
+    if (!main) return;
+    const observer = new MutationObserver(() => {
+      if (scrollToFragment()) observer.disconnect();
+    });
+    observer.observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-route-ready"] });
+    return () => observer.disconnect();
+  }, [location.pathname, location.hash]);
 
   // Mouse move listener — throttled to one update per animation frame so
   // the radial-gradient spotlight (which resamples on every set) doesn't
@@ -117,7 +148,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
 
         {pointerEffectsEnabled && location.pathname === "/" && (
-          <Suspense fallback={null}><InteractiveDots /></Suspense>
+          <PageErrorBoundary fallback={null}><Suspense fallback={null}><InteractiveDots /></Suspense></PageErrorBoundary>
         )}
 
         {!isMobile && (
@@ -142,7 +173,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
 
-      {pointerEffectsEnabled && <Suspense fallback={null}><Cursor /></Suspense>}
+      {pointerEffectsEnabled && <PageErrorBoundary fallback={null}><Suspense fallback={null}><Cursor /></Suspense></PageErrorBoundary>}
       <Nav />
 
       {/* Scroll progress bar — thin white line at the very top */}
@@ -152,14 +183,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         aria-hidden="true"
       />
 
-      <CommandPalette />
       <AskAI />
+      <CommandPalette />
 
       <main id="main-content" tabIndex={-1} className="relative">
         {children}
       </main>
 
-      <footer className="relative z-10 border-t border-white/[0.06] px-6 pb-24 pt-8 sm:px-8 md:px-10">
+      <footer className="relative z-10 border-t border-white/[0.06] px-6 pb-24 pt-8 sm:px-8 md:px-24">
         <div className="mx-auto flex w-full max-w-[100rem] items-center justify-between gap-6">
           <img
             src="/signature.svg"

@@ -21,11 +21,7 @@ export default function ThisWebsite() {
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title="This Website"
-        description="How Charlie built this site with React, TypeScript, Framer Motion, and MDX."
-        path="/projects/thiswebsite"
-      />
+      <RouteMeta path="/projects/thiswebsite" />
       <div className="w-full">
         <motion.header
           initial={false}

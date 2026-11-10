@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import RouteMeta from "../components/RouteMeta";
+import { notFoundMetadata } from "../lib/routeMetadata";
 
 const destinations = [
   {
@@ -21,12 +22,7 @@ export default function NotFound() {
 
   return (
     <div className="page-shell flex items-center">
-      <RouteMeta
-        title="Page Not Found"
-        description="That page is gone, but the rest of Charlie H's site is still here."
-        path={location.pathname}
-        noIndex
-      />
+      <RouteMeta {...notFoundMetadata} path={location.pathname} />
 
       <div className="mx-auto grid w-full max-w-[96rem] gap-16 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)] lg:items-end lg:gap-12">
         <motion.section

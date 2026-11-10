@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Layout from "./components/Layout.tsx";
 import CookieConsent from "./components/CookieConsent.tsx";
+import PageErrorBoundary from "./components/PageErrorBoundary.tsx";
 import {
   recordNewsletterVisit,
   shouldShowNewsletterNotice,
@@ -228,7 +229,7 @@ function AnimatedRoutes({ pages }: { pages: AppPageComponents }) {
           {/* Each destination owns its loading state so a suspended route cannot
               hide the transition manager or block a later navigation. */}
           <Suspense key={location.pathname} fallback={<LoadingFallback />}>
-            {element}
+            <PageErrorBoundary>{element}</PageErrorBoundary>
           </Suspense>
         </AnimatePresence>
       </Layout>

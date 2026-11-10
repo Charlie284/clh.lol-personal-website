@@ -145,7 +145,7 @@ components:
 
 **Creative North Star: "The Dark Console"**
 
-clh.lol is a near-black stage that behaves like a personal control surface. The canvas is committed dark (`#020202`), the ink is committed white, and depth is built from transparency layering rather than shadows. Type carries the identity: a single oversized Fraunces hero set against angular Syne section headings and quiet Outfit body copy. The layout takes positions — asymmetric, off-center, generous negative space — and refuses the centered hero-stack template.
+clh.lol is a near-black stage that behaves like a personal control surface. The canvas is committed dark (`#020202`), the ink is committed white, and depth is built from transparency layering rather than shadows. Type carries the identity: a single oversized Fraunces hero set against angular Syne section headings and quiet Outfit body copy. The homepage opens with a centered name-first hero; everything below it takes positions — asymmetric, off-center, generous negative space.
 
 Motion is behavior, not garnish. A spring cursor tracks the pointer, navigation keeps its labels stationary, page transitions crossfade through soft blur and scale, the project gallery scroll-links blur and scale to scroll velocity. Every animated surface has a reduced-motion fallback that collapses to a crossfade or static state. The site itself is the demo: source and contribution-history links, command palette (`/`) — these are content, not effects.
 
@@ -227,7 +227,7 @@ The system is tonal-layered by default. Depth comes from the white transparency 
 ### Buttons
 - **Shape:** full pill (`rounded-full`).
 - **Primary:** solid white fill, black ink, `px-12 py-6` (48px × 24px), label-style 10px uppercase tracked text. Magnetic hover: the button spring-pulls toward the cursor (0.35 factor), a soft `bg-white/10 blur-xl` glow follows the spring. `hover:scale-105 active:scale-95`.
-- **Hover / Focus:** the magnetic spring + a white/10 blurred glow that fades in on `group-hover`. Focus-visible requires a visible ring (currently absent — see Don'ts).
+- **Hover / Focus:** the magnetic spring + a white/10 blurred glow that fades in on `group-hover`. Focus-visible shows a 2px white outline (global `:focus-visible` rule).
 - **Ghost / Tertiary:** transparent background, `text-white/40 hover:text-white`, label-style 10px uppercase tracked, often paired with an `ArrowUpRight` icon that translates up-right on hover. Used for "All projects", "MY STORY", footer CTA links.
 
 ### Chips / Tags
@@ -244,7 +244,7 @@ The system is tonal-layered by default. Depth comes from the white transparency 
 
 ### Inputs / Fields
 - **Search (command palette):** borderless on a recessed dark surface, white ink, placeholder at `text-white/35` (must clear 4.5:1 — verify against `#020202`).
-- **Focus:** the command palette relies on selection state rather than a focus ring. Inputs elsewhere require a visible focus ring (currently missing — see Don'ts).
+- **Focus:** the command palette relies on selection state rather than a focus ring. Inputs elsewhere use the global 2px white `:focus-visible` outline.
 
 ### Navigation
 - **Style:** a centered floating navigation surface with a near-black translucent background and subtle border, so labels remain readable over scrolling content.

@@ -4,10 +4,10 @@ A high-performance, visually immersive personal portfolio built with React 19, V
 
 ## Key Features & Recent Upgrades
 
-- **Asymmetric Modern Layout:** Desktop view features a left-aligned hero section and a top-right floating navigation bar.
-- **Advanced Page Transitions:** Snappy (`0.4s`) transitions using `AnimatePresence` with custom `cubic-bezier` easing, soft blurs, and scale effects.
-- **Scroll-Linked Project Gallery:** Projects on the `/projects` page animate (scale, fade, blur) dynamically based on your scroll position and speed.
-- **GitHub Activity:** A compact link to the author's GitHub profile.
+- **Homepage:** A centered hero introduces the site, followed by featured work, capabilities, and personal context.
+- **Page Transitions:** Short fades between routes, with reduced-motion support and focus moved to the incoming page heading.
+- **Project Browsing:** A keyboard- and touch-accessible homepage carousel highlights six projects; the `/projects` page provides filters and linked project rows.
+- **GitHub Profile:** A link in the homepage hero opens the author's GitHub profile.
 - **Responsive Design:** Fully optimized for vertical (mobile) displays with centered layouts and auto-scaling typography.
 - **Custom Interactive Cursor:** A spring-based circle cursor that reacts to clicks and hovers.
 - **Integrated Blog:** A dedicated internal blog page for long-form updates.
@@ -40,6 +40,7 @@ src/
 - **Installation & Quick Start:** `docs/INSTALL.md`
 - **Contributing Guidelines:** `docs/CONTRIBUTING.md`
 - **Architecture Overview:** `docs/ARCHITECTURE.md`
+- **Website → Substack sync:** `docs/SUBSTACK_SYNC.md`
 
 ## Development
 

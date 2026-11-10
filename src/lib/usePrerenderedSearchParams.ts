@@ -10,5 +10,8 @@ export function usePrerenderedSearchParams() {
   // Static HTML contains the unfiltered page. React Router supplies updates
   // after hydration, including immediate restoration on client navigation.
   const visibleParams = useSyncExternalStore(subscribe, () => searchParams, getServerSnapshot);
-  return [visibleParams, setSearchParams] as const;
+  // Keep controlled filters disabled until their URL state and handlers mount,
+  // so input entered into static markup cannot be discarded by hydration.
+  const filtersReady = visibleParams !== emptyParams;
+  return [visibleParams, setSearchParams, filtersReady] as const;
 }

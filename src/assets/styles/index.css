@@ -18,7 +18,8 @@
     font-family: "Syne";
     font-style: normal;
     font-weight: 700 800;
-    font-display: optional;
+    /* Section headings must always end up in Syne; it is preloaded, and swap covers slow loads. */
+    font-display: swap;
     src: url("../fonts/syne-latin.woff2") format("woff2");
 }
 

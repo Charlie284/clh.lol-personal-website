@@ -9,6 +9,7 @@ import {
   type BlogPostFrontmatter,
 } from "../lib/blog";
 import RouteMeta from "../components/RouteMeta";
+import { getBlogMetadata } from "../lib/routeMetadata";
 import NewsletterSignup from "../components/NewsletterSignup";
 
 function PostMeta({ meta, wordCount }: { meta: BlogPostFrontmatter; wordCount: number }) {
@@ -85,7 +86,7 @@ export default function BlogPostPage() {
   const { meta, Content, wordCount } = post;
 
   // Compute reading time handled in PostMeta
-  // Related posts based on shared tags (max 3)
+  // Related posts based on shared tags (max 2, so the two-column grid never leaves an orphan)
   const allPosts = getAllBlogPosts();
   const relatedPosts = allPosts
     .filter(
@@ -93,18 +94,11 @@ export default function BlogPostPage() {
         p.meta.slug !== meta.slug &&
         p.meta.tags.some((tag) => meta.tags.includes(tag)),
     )
-    .slice(0, 3);
+    .slice(0, 2);
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title={meta.title}
-        description={meta.description}
-        path={`/blog/${meta.slug}`}
-        type="article"
-        publishedTime={meta.date}
-        modifiedTime={meta.updated ?? meta.date}
-      />
+      <RouteMeta {...getBlogMetadata(meta)} />
       <article className="max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 36 }}
@@ -129,7 +123,7 @@ export default function BlogPostPage() {
             </p>
           </header>
 
-          <div className="mx-auto max-w-[65ch]">
+          <div className="max-w-[65ch]">
             <div className="blog-prose">
               <Suspense fallback={<p role="status">Loading article…</p>}>
                 <Content components={{
@@ -166,7 +160,7 @@ export default function BlogPostPage() {
                         <span className="text-xs text-white/60">
                           {formatBlogDate(p.meta.date)}
                         </span>
-                        {p.meta.tags.map((tag) => (
+                        {p.meta.tags.slice(0, 2).map((tag) => (
                           <span
                             key={tag}
                             className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/55"

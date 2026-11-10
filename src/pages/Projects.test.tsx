@@ -52,7 +52,7 @@ describe("Projects", () => {
     });
     expect(screen.getByText("Showing 2 of 10")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Personal Website" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Connor's Website" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Connor’s Website" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Status"), {
       target: { value: "Complete" },

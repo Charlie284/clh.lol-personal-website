@@ -12,18 +12,25 @@ function createWorker() {
     request: RequestDetails;
     respondWith: (response: Promise<Response>) => void;
   };
-  const listeners = new Map<string, (event: FetchEvent) => void>();
+  type CacheMessageEvent = {
+    data: unknown;
+    waitUntil: (work: Promise<unknown>) => void;
+  };
+  type WorkerEvent = FetchEvent | CacheMessageEvent;
+  const listeners = new Map<string, (event: WorkerEvent) => void>();
   const cache = {
     match: vi.fn<() => Promise<Response | undefined>>().mockResolvedValue(undefined),
     put: vi.fn<(request: RequestDetails, response: Response) => Promise<void>>().mockResolvedValue(undefined),
   };
   const caches = { open: vi.fn(async () => cache) };
-  const fetch = vi.fn(async () => new Response("fresh network content"));
+  const fetch = vi.fn<(request: string | RequestDetails, options?: RequestInit) => Promise<Response>>(
+    async () => new Response("fresh network content"),
+  );
 
   runInNewContext(source, {
     self: {
       location: { origin },
-      addEventListener: (name: string, listener: (event: FetchEvent) => void) => {
+      addEventListener: (name: string, listener: (event: WorkerEvent) => void) => {
         listeners.set(name, listener);
       },
     },
@@ -48,7 +55,13 @@ function createWorker() {
     return response;
   }
 
-  return { cache, caches, fetch, request };
+  async function message(data: unknown) {
+    let work: Promise<unknown> | undefined;
+    listeners.get("message")!({ data, waitUntil: (result) => { work = result; } });
+    await work;
+  }
+
+  return { cache, caches, fetch, request, message };
 }
 
 describe("service worker cache failures", () => {
@@ -98,5 +111,71 @@ describe("service worker cache failures", () => {
     worker.cache.match.mockResolvedValue(new Response("cached page"));
 
     expect(await (await worker.request("/projects", "navigate")).text()).toBe("cached page");
+  });
+});
+
+describe("initial page resource caching", () => {
+  it("retains only requested same-origin build resources and deduplicates URLs", async () => {
+    const worker = createWorker();
+    await worker.message({
+      type: "CACHE_INITIAL_RESOURCES",
+      urls: [
+        `${origin}/assets/Projects.js`,
+        `${origin}/assets/Projects.js`,
+        `${origin}/assets/article.js`,
+        `${origin}/assets/site.css`,
+        `${origin}/assets/font.woff2`,
+        "https://third-party.test/assets/tracker.js",
+        `${origin}/api/subscriptions`,
+        `${origin}/api/export.js`,
+        `${origin}/blog/article`,
+        "not a URL",
+        null,
+      ],
+    });
+
+    expect(worker.fetch.mock.calls.map(([url]) => url)).toEqual([
+      `${origin}/assets/Projects.js`,
+      `${origin}/assets/article.js`,
+      `${origin}/assets/site.css`,
+      `${origin}/assets/font.woff2`,
+    ]);
+    expect(worker.cache.put).toHaveBeenCalledTimes(4);
+    expect(worker.fetch).toHaveBeenCalledWith(`${origin}/assets/Projects.js`, { cache: "force-cache" });
+  });
+
+  it("does not redownload an already cached resource", async () => {
+    const worker = createWorker();
+    worker.cache.match.mockResolvedValue(new Response("already cached"));
+
+    await worker.message({ type: "CACHE_INITIAL_RESOURCES", urls: [`${origin}/assets/Projects.js`] });
+
+    expect(worker.fetch).not.toHaveBeenCalled();
+    expect(worker.cache.put).not.toHaveBeenCalled();
+  });
+
+  it.each(["open", "match", "put", "fetch"] as const)(
+    "tolerates initial-resource %s failures",
+    async (operation) => {
+      const worker = createWorker();
+      const failure = new Error("Unavailable");
+      if (operation === "open") worker.caches.open.mockRejectedValue(failure);
+      else if (operation === "fetch") worker.fetch.mockRejectedValue(failure);
+      else worker.cache[operation].mockRejectedValue(failure);
+
+      await expect(worker.message({
+        type: "CACHE_INITIAL_RESOURCES",
+        urls: [`${origin}/assets/Projects.js`],
+      })).resolves.toBeUndefined();
+    },
+  );
+
+  it("does not retain unsuccessful fetches", async () => {
+    const worker = createWorker();
+    worker.fetch.mockResolvedValue(new Response("Missing", { status: 404 }));
+
+    await worker.message({ type: "CACHE_INITIAL_RESOURCES", urls: [`${origin}/assets/Projects.js`] });
+
+    expect(worker.cache.put).not.toHaveBeenCalled();
   });
 });

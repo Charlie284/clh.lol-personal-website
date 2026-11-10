@@ -38,12 +38,7 @@ export default function NewsletterConfirmed() {
 
   return (
     <section className="page-shell flex items-center">
-      <RouteMeta
-        title="Newsletter"
-        description="Confirm your newsletter subscription through Kit and choose whether to hide signup prompts in this browser."
-        path="/newsletter-confirmed"
-        noIndex
-      />
+      <RouteMeta path="/newsletter-confirmed" />
 
       <div className="mx-auto w-full max-w-3xl border-y border-white/10 py-14 sm:py-20">
         <p className="text-[10px] font-bold uppercase tracking-[0.36em] text-white/55">

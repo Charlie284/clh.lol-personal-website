@@ -30,11 +30,7 @@ export default function Server() {
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title="Server Project"
-        description="A personal homelab built from repurposed hardware with Ubuntu Server, Docker Compose, Portainer, Jellyfin, and Homarr."
-        path="/projects/server"
-      />
+      <RouteMeta path="/projects/server" />
       <div className="w-full">
         <motion.header
           initial={false}

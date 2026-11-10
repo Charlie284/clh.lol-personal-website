@@ -31,11 +31,7 @@ export default function NewTrierBlock() {
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title="New Trier Block"
-        description="A case study of New Trier Block, a Flutter bell-schedule app with a period countdown, personal class schedules, and an iOS widget."
-        path="/projects/new-trier-block"
-      />
+      <RouteMeta path="/projects/new-trier-block" />
       <motion.header
         initial={false}
         animate={{ opacity: 1, y: 0 }}
@@ -54,7 +50,7 @@ export default function NewTrierBlock() {
         </p>
       </motion.header>
 
-      <figure className="mb-12 grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-16">
+      <figure className="mb-12 grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start md:gap-16">
         <a href="/project-previews/new-trier-day-detail.png" target="_blank" rel="noopener noreferrer" aria-label="View the New Trier Block day schedule at full size" className="mx-auto block w-full max-w-72 overflow-hidden rounded-xl border border-white/10 md:order-2">
           <img
             src="/project-previews/new-trier-day-detail.webp"

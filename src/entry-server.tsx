@@ -1,5 +1,5 @@
 import React, { type ComponentType } from "react";
-import { setPrerenderedArticles } from "./lib/blog";
+import { setPrerenderedArticles, type BlogPostFrontmatter } from "./lib/blog";
 import { MDXProvider } from "@mdx-js/react";
 import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom";
@@ -15,6 +15,25 @@ import Server from "./pages/projects/Server";
 import NewTrierBlock from "./pages/projects/NewTrierBlock";
 import Startle from "./pages/projects/Startle";
 import ThisWebsite from "./pages/projects/ThisWebsite";
+import { getBlogMetadata, staticPageMetadata } from "./lib/routeMetadata";
+
+export { notFoundMetadata, offlineMetadata, resolveMetadata, siteUrl } from "./lib/routeMetadata";
+
+const blogMetadata = import.meta.glob<BlogPostFrontmatter>("/src/content/blog/*.mdx", {
+  eager: true,
+  import: "frontmatter",
+  query: "?metadata",
+});
+
+export const prerenderRoutes = [
+  ...Object.entries(staticPageMetadata).map(([path, metadata]) => ({ path, ...metadata })),
+  ...Object.entries(blogMetadata).map(([file, meta]) => {
+    if (!meta.slug || !meta.title || !meta.description || !meta.date) {
+      throw new Error(`Missing required frontmatter in ${file}`);
+    }
+    return getBlogMetadata(meta);
+  }),
+];
 
 setPrerenderedArticles(import.meta.glob<ComponentType>("/src/content/blog/*.mdx", {
   eager: true,

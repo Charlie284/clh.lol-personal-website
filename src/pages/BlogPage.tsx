@@ -9,7 +9,7 @@ import RouteMeta from "../components/RouteMeta";
 export default function BlogPage() {
   const posts = getAllBlogPosts();
   const featuredPost = posts.find((post) => post.meta.slug === "why-i-used-rust-to-calculate-pi");
-  const [searchParams, setSearchParams] = usePrerenderedSearchParams();
+  const [searchParams, setSearchParams, filtersReady] = usePrerenderedSearchParams();
   const searchQuery = searchParams.get("q") ?? "";
 
   const allTags = Array.from(new Set(posts.flatMap((p) => p.meta.tags)));
@@ -95,11 +95,7 @@ export default function BlogPage() {
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title="Blog"
-        description="Notes from Charlie about Linux, self-hosting, privacy, and building software."
-        path="/blog"
-      />
+      <RouteMeta path="/blog" />
       <motion.header
         initial={false}
         animate={{ opacity: 1, y: 0 }}
@@ -146,6 +142,7 @@ export default function BlogPage() {
               ref={searchRef}
               id="blog-search"
               type="text"
+              disabled={!filtersReady}
               placeholder="Search posts..."
               value={searchQuery}
               onChange={(e) => updateFilter("q", e.target.value)}
@@ -160,6 +157,7 @@ export default function BlogPage() {
           <div className="relative" onClick={(e) => e.stopPropagation()} onBlur={dismissOnBlur}>
             <button
               ref={sortTriggerRef}
+              disabled={!filtersReady}
               onClick={() =>
                 setActiveMenu(activeMenu === "sort" ? null : "sort")
               }
@@ -227,6 +225,7 @@ export default function BlogPage() {
           <div className="max-w-full sm:relative" onClick={(e) => e.stopPropagation()} onBlur={dismissOnBlur}>
             <button
               ref={tagTriggerRef}
+              disabled={!filtersReady}
               onClick={() => setActiveMenu(activeMenu === "tag" ? null : "tag")}
               aria-expanded={activeMenu === "tag"}
               aria-controls="tag-options"

@@ -39,12 +39,7 @@ export default function Startle() {
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title="Startle for macOS"
-        description="Startle is a local-first Mac app I am building to schedule videos without giving up privacy or an emergency stop."
-        path="/projects/startle"
-        image="/startle-app-icon.png"
-      />
+      <RouteMeta path="/projects/startle" />
 
       <div className="w-full">
         <motion.header
@@ -79,10 +74,10 @@ export default function Startle() {
               width={2100}
               height={1440}
               loading="eager"
-              className="h-auto w-full"
+              className="aspect-[2100/880] h-auto w-full object-cover object-top"
             />
           </a>
-          <figcaption className="mt-4 flex flex-wrap justify-between gap-2 text-sm leading-relaxed text-white/65">
+          <figcaption className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm leading-relaxed text-white/65">
             <span>The dashboard keeps playback status and the pause controls together.</span>
             <a href="/project-previews/startle-dashboard.png" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-white underline decoration-white/30 underline-offset-4">View full size ↗</a>
           </figcaption>

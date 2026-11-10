@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   dismissNewsletterNotice,
+  hasConfirmedNewsletterSubscription,
   hasCookieConsent,
   shouldShowNewsletterNotice,
 } from "../lib/newsletterPreferences";
@@ -22,6 +23,7 @@ export default function NewsletterNotice({
   const [isVisible, setIsVisible] = useState(
     () =>
       hasCookieConsent() &&
+      !hasConfirmedNewsletterSubscription() &&
       (initialIsVisible ?? shouldShowNewsletterNotice()),
   );
   const [view, setView] = useState<NoticeView>("summary");

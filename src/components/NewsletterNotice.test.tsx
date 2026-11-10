@@ -105,6 +105,16 @@ describe("NewsletterNotice", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("honors a saved subscription choice over eligibility captured earlier in the visit", () => {
+    markNewsletterSubscriptionConfirmed();
+    const onShown = vi.fn();
+
+    render(<NewsletterNotice initialIsVisible onShown={onShown} />);
+
+    expect(screen.queryByRole("button", { name: "Get new posts" })).not.toBeInTheDocument();
+    expect(onShown).not.toHaveBeenCalled();
+  });
+
   it("does not render before cookies are allowed", () => {
     setCookieConsentChoice("deny");
 

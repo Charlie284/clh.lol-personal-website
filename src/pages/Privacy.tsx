@@ -27,11 +27,7 @@ export default function Privacy() {
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title="Privacy"
-        description="How newsletter subscriptions and basic site data are handled on clh.lol."
-        path="/privacy"
-      />
+      <RouteMeta path="/privacy" />
 
       <article className="mx-auto max-w-3xl">
         <Link

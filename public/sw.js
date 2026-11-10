@@ -45,6 +45,32 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "CACHE_INITIAL_RESOURCES" || !Array.isArray(event.data.urls)) return;
+
+  const urls = new Set();
+  for (const value of event.data.urls) {
+    if (typeof value !== "string") continue;
+    try {
+      const url = new URL(value);
+      if (url.origin === self.location.origin && url.pathname.startsWith("/assets/") &&
+        /\.(js|css|woff2)$/.test(url.pathname)) urls.add(url.href);
+    } catch {
+      // Ignore malformed resources; only this build's static chunks are eligible.
+    }
+  }
+
+  event.waitUntil(Promise.all([...urls].map(async (url) => {
+    try {
+      if (await matchCache([url])) return;
+      const response = await fetch(url, { cache: "force-cache" });
+      await cacheResponse(url, response);
+    } catch {
+      // Losing connectivity or optional storage must not affect the open page.
+    }
+  })));
+});
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);

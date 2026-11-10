@@ -16,6 +16,7 @@ PUSHABLE
 coverage/
 playwright-report/
 test-results/
+.substack-sync/
 
 # Node
 npm-debug.log*

@@ -20,6 +20,15 @@ import {
   subscribeToNewsletterPreference,
 } from "../lib/newsletterPreferences";
 
+const subscribeToHydration = () => () => {};
+
+function useHydratedReducedMotion() {
+  const prefersReducedMotion = useReducedMotion();
+  // The prerender cannot know the browser's preference. Match its first
+  // render before applying reduced motion, including conditional decoration.
+  return React.useSyncExternalStore(subscribeToHydration, () => prefersReducedMotion, () => null);
+}
+
 const MagneticButton = ({
   children,
   to,
@@ -34,7 +43,7 @@ const MagneticButton = ({
   const y = useMotionValue(0);
 
   const [isMobile, setIsMobile] = React.useState(false);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useHydratedReducedMotion();
 
   React.useEffect(() => {
     setIsMobile(window.matchMedia("(pointer: coarse)").matches);
@@ -284,6 +293,8 @@ const projectPool: FeaturedProject[] = projectsList.map((project) => ({
 }));
 
 const featuredCount = 6;
+const leadProject = projectPool.find((project) => project.href === "/projects/startle") ?? projectPool[0];
+const otherProjects = projectPool.filter((project) => project !== leadProject);
 
 const MotionLink = motion.create(Link);
 
@@ -337,7 +348,7 @@ function FeaturedWorkSection({
             </div>
             <Link
               to="/projects"
-              className="group inline-flex min-h-11 items-center gap-3 text-xs font-bold uppercase tracking-[0.14em] text-white/70 transition-colors hover:text-white"
+              className="group inline-flex min-h-11 shrink-0 items-center gap-3 whitespace-nowrap text-xs font-bold uppercase tracking-[0.14em] text-white/70 transition-colors hover:text-white"
             >
               All projects
               <ArrowUpRight
@@ -422,7 +433,20 @@ function FeaturedWorkSection({
                     style={{ zIndex: selected ? 3 : 1, pointerEvents: visible ? "auto" : "none" }}
                     className={`coverflow-card ${item.media?.frameClassName ?? "bg-[#101114]"}`}
                   >
-                    {item.media ? (
+                    {item.media?.inset ? (
+                      <span className="flex h-full w-full items-center justify-center p-[12%]">
+                        <img
+                          src={item.media.src}
+                          alt={`${item.title} preview`}
+                          width={item.media.width}
+                          height={item.media.height}
+                          loading={selected ? "eager" : "lazy"}
+                          decoding="async"
+                          draggable={false}
+                          className="aspect-square h-full w-auto max-w-full rounded-[22%] object-contain"
+                        />
+                      </span>
+                    ) : item.media ? (
                       <img
                         src={item.media.src}
                         alt={`${item.title} preview`}
@@ -431,7 +455,7 @@ function FeaturedWorkSection({
                         loading={selected ? "eager" : "lazy"}
                         decoding="async"
                         draggable={false}
-                        className={`h-full w-full object-contain ${item.media.inset ? "p-[12%]" : ""}`}
+                        className="h-full w-full object-contain"
                       />
                     ) : (
                       <div className="flex h-full w-full flex-col justify-between p-5 sm:p-8 md:p-10">
@@ -476,71 +500,6 @@ type ExpertiseGroup = {
   project: string;
   href: string;
 };
-
-/* ---------- Pinned section helpers ---------- */
-
-const PinnedContext = React.createContext<{
-  scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"];
-  prefersReducedMotion: boolean | null;
-}>({ scrollYProgress: { get: () => 0, on: () => () => {} } as never, prefersReducedMotion: false });
-
-function usePinned() {
-  return React.useContext(PinnedContext);
-}
-
-function PinnedSection({
-  vh = 250,
-  prefersReducedMotion,
-  className,
-  panelClassName,
-  children,
-}: {
-  vh?: number;
-  prefersReducedMotion: boolean | null;
-  className?: string;
-  panelClassName?: string;
-  children: React.ReactNode;
-}) {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end end"],
-  });
-
-  // On touch devices pinned panels clip content taller than the viewport
-  // (overflow-hidden + h-screen). Detect coarse pointer and collapse to
-  // a normal auto-height section the way reduced-motion does, so mobile
-  // users get native scroll and never lose content.
-  const [isTouch, setIsTouch] = React.useState(false);
-  React.useEffect(() => {
-    const check = () => setIsTouch(window.matchMedia("(max-width: 1023px), (max-height: 800px), (pointer: coarse)").matches);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const collapse = prefersReducedMotion || isTouch;
-
-  return (
-    <PinnedContext.Provider value={{ scrollYProgress, prefersReducedMotion: Boolean(prefersReducedMotion || isTouch) }}>
-      <section
-        ref={ref}
-        className={className}
-        style={{ height: collapse ? "auto" : `${vh}vh` }}
-      >
-        <div
-          className={
-            collapse
-              ? panelClassName
-              : `sticky top-0 h-screen overflow-hidden flex flex-col justify-center ${panelClassName ?? ""}`
-          }
-        >
-          {children}
-        </div>
-      </section>
-    </PinnedContext.Provider>
-  );
-}
 
 /* Hero — the headline responds to scroll, while the value proposition and
    primary actions stay visible from the initial viewport. */
@@ -596,42 +555,7 @@ function HeroSection({
   );
 }
 
-/* Philosophy — pinned, headline wipes + paragraphs reveal in sequence */
-function PhilosophyParagraph({
-  children,
-  index,
-  progress,
-  prefersReducedMotion,
-}: {
-  children: React.ReactNode;
-  index: number;
-  progress: MotionValue<number>;
-  prefersReducedMotion: boolean | null;
-}) {
-  const y = useTransform(
-    progress,
-    [0.3 + index * 0.18, 0.42 + index * 0.18],
-    prefersReducedMotion ? [0, 0] : [40, 0],
-  );
-  const opacity = useTransform(
-    progress,
-    [0.3 + index * 0.18, 0.4 + index * 0.18],
-    prefersReducedMotion ? [1, 1] : [0, 1],
-  );
-  const clip = useTransform(
-    progress,
-    [0.3 + index * 0.18, 0.42 + index * 0.18],
-    prefersReducedMotion
-      ? ["inset(0 0 0 0)", "inset(0 0 0 0)"]
-      : ["inset(0 100% 0 0)", "inset(0 0 0 0)"],
-  );
-
-  return <motion.p style={{ y, opacity, clipPath: clip }}>{children}</motion.p>;
-}
-
 function PhilosophySection() {
-  const { scrollYProgress, prefersReducedMotion } = usePinned();
-  const headlineClip = useTransform(scrollYProgress, [0.1, 0.3], prefersReducedMotion ? ["inset(0 0 0 0)", "inset(0 0 0 0)"] : ["inset(100% 0 0 0)", "inset(0 0 0 0)"]);
   const paragraphs = [
     "I'm a student developer. I build small tools, websites, and a homelab from whatever hardware I have around.",
     "Away from the keyboard, I like rebuilding PCs, soldering, and taking electronics apart to see how they work.",
@@ -639,19 +563,17 @@ function PhilosophySection() {
   return (
     <div className="mx-auto grid w-full max-w-[100rem] grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
       <div className="w-full min-w-0 lg:contents">
-        <motion.h2 style={{ clipPath: headlineClip }} className="font-serif text-[clamp(2.25rem,10vw,4.5rem)] text-white leading-[0.9] uppercase">
+        <h2 style={{ clipPath: "inset(0 0 0 0)" }} className="mb-8 font-serif text-[clamp(2.25rem,10vw,4.5rem)] text-white leading-[0.9] uppercase lg:mb-0">
           Software. Servers. <br /> <span className="italic">Still learning.</span>
-        </motion.h2>
+        </h2>
         <div className="space-y-6 text-[clamp(1rem,1.6vw,1.25rem)] text-white/70 leading-relaxed font-light italic">
-          {paragraphs.map((paragraph, index) => (
-            <PhilosophyParagraph
+          {paragraphs.map((paragraph) => (
+            <p
               key={paragraph}
-              index={index}
-              progress={scrollYProgress}
-              prefersReducedMotion={prefersReducedMotion}
+              style={{ opacity: 1, clipPath: "inset(0 0 0 0)", transform: "none" }}
             >
               {paragraph}
-            </PhilosophyParagraph>
+            </p>
           ))}
         </div>
       </div>
@@ -665,18 +587,13 @@ function SystemViewSection({
 }: {
   expertiseCategories: ExpertiseGroup[];
 }) {
-  const { scrollYProgress, prefersReducedMotion } = usePinned();
-  const headerOpacity = useTransform(scrollYProgress, [0.05, 0.2], prefersReducedMotion ? [1, 1] : [0, 1]);
-  const headerY = useTransform(scrollYProgress, [0.05, 0.2], prefersReducedMotion ? [0, 0] : [40, 0]);
-  const gridOpacity = useTransform(scrollYProgress, [0.1, 0.3], prefersReducedMotion ? [1, 1] : [0, 1]);
-
   return (
     <section
       aria-labelledby="capabilities-heading"
       className="mx-auto w-full max-w-[100rem]"
     >
-      <motion.div
-        style={{ opacity: headerOpacity, y: headerY }}
+      <div
+        style={{ opacity: 1, transform: "none" }}
         className="mb-12 grid gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(18rem,28rem)] 2xl:items-end 2xl:gap-16"
       >
         <h2
@@ -688,17 +605,17 @@ function SystemViewSection({
         <p className="w-full max-w-[65ch] text-lg leading-relaxed text-white/65">
           I mostly build native apps, websites, and the systems behind them. Each one below links to a real project.
         </p>
-      </motion.div>
+      </div>
 
-      <motion.div
-        style={{ opacity: gridOpacity }}
+      <div
+        style={{ opacity: 1 }}
         className="divide-y divide-white/[0.08] border-y border-white/[0.08]"
       >
         {expertiseCategories.map((group) => (
           <Link
             key={group.id}
             to={group.href}
-            className="group grid gap-5 py-8 sm:py-10 md:grid-cols-2 md:items-start md:gap-x-10 2xl:grid-cols-[minmax(0,0.7fr)_minmax(0,1.1fr)_minmax(0,1fr)_auto] 2xl:items-center"
+            className="group grid gap-5 py-8 sm:py-10 md:grid-cols-2 md:items-start md:gap-x-10 2xl:grid-cols-[minmax(0,0.7fr)_minmax(0,1.1fr)_minmax(0,1fr)_12rem] 2xl:items-center"
             aria-label={`Open ${group.project}`}
           >
             <h3 className="min-w-0 font-serif text-2xl uppercase leading-tight text-white sm:text-3xl">
@@ -717,7 +634,7 @@ function SystemViewSection({
                 </span>
               ))}
             </div>
-            <span className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors group-hover:text-white">
+            <span className="inline-flex min-h-11 items-center gap-2 2xl:justify-self-end text-[10px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors group-hover:text-white">
               {group.project}
               <ArrowUpRight
                 size={16}
@@ -727,7 +644,7 @@ function SystemViewSection({
             </span>
           </Link>
         ))}
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -806,7 +723,7 @@ export default function Home({
   newsletterNoticeEligible,
   onNewsletterNoticeShown,
 }: HomeProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useHydratedReducedMotion();
   const [showNewsletterSection, setShowNewsletterSection] = React.useState(true);
 
   React.useEffect(() => {
@@ -819,14 +736,15 @@ export default function Home({
   }, []);
 
   // Keep server markup and the first hydration render identical; shuffle only after mount.
-  const [featuredProjects, setFeaturedProjects] = React.useState(() => projectPool.slice(0, featuredCount));
+  // The lead card stays fixed so the centered preview never swaps after load.
+  const [featuredProjects, setFeaturedProjects] = React.useState(() => [leadProject, ...otherProjects.slice(0, featuredCount - 1)]);
   React.useEffect(() => {
-    const shuffled = [...projectPool];
+    const shuffled = [...otherProjects];
     for (let index = shuffled.length - 1; index > 0; index -= 1) {
       const other = Math.floor(Math.random() * (index + 1));
       [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
     }
-    setFeaturedProjects(shuffled.slice(0, featuredCount));
+    setFeaturedProjects([leadProject, ...shuffled.slice(0, featuredCount - 1)]);
   }, []);
 
   const expertiseCategories = [
@@ -858,11 +776,7 @@ export default function Home({
 
   return (
     <>
-      <RouteMeta
-        title="Charlie H"
-        description="Charlie is a student developer building a macOS app, websites, and a homelab."
-        path="/"
-      />
+      <RouteMeta path="/" />
       {/* Hero — identity, value proposition, and primary work are visible at load. */}
       <HeroSection
         prefersReducedMotion={prefersReducedMotion}
@@ -871,7 +785,7 @@ export default function Home({
             <p className="max-w-3xl text-lg font-light leading-tight tracking-tight text-white/65 sm:text-2xl md:text-3xl">
               Student developer making{" "}
               <span className="font-normal text-white">a macOS app</span>, websites, and{" "}
-              <span className="font-normal text-white">self-hosted tools.</span>
+              <span className="whitespace-nowrap font-normal text-white">self-hosted tools.</span>
             </p>
             <div className="flex flex-col items-center gap-4 sm:flex-row">
               <MagneticButton to="/projects/startle" className="rounded-full bg-white px-10 py-5 font-bold text-black transition-transform hover:scale-105 active:scale-95">
@@ -933,15 +847,19 @@ export default function Home({
       <FeaturedWorkSection featuredProjects={featuredProjects} prefersReducedMotion={prefersReducedMotion} />
 
       {/* Artifact-backed capabilities replace the undifferentiated tool wall. */}
-      <PinnedSection prefersReducedMotion={true} className="relative z-10 bg-[#020202] px-6 py-16 md:px-24 md:py-20" panelClassName="px-0">
-        <SystemViewSection expertiseCategories={expertiseCategories} />
-      </PinnedSection>
+      <section className="relative z-10 bg-[#020202] px-6 py-16 md:px-24 md:py-20" style={{ height: "auto" }}>
+        <div className="px-0">
+          <SystemViewSection expertiseCategories={expertiseCategories} />
+        </div>
+      </section>
 
       {/* Personal context now follows concrete work instead of delaying it. */}
-      <PinnedSection prefersReducedMotion={true} className="relative z-10 border-y border-white/5 bg-[#050505] px-6 py-16 md:px-24 md:py-20" panelClassName="px-0">
-        <div id="about" className="scroll-mt-24" />
-        <PhilosophySection />
-      </PinnedSection>
+      <section className="relative z-10 border-y border-white/5 bg-[#050505] px-6 py-16 md:px-24 md:py-20" style={{ height: "auto" }}>
+        <div className="px-0">
+          <div id="about" className="scroll-mt-24" />
+          <PhilosophySection />
+        </div>
+      </section>
 
       <FaqSection />
 

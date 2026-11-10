@@ -18,7 +18,8 @@
     "test:e2e": "npm run build && playwright test",
     "test:e2e:install": "playwright install chromium",
     "type-check": "tsc -b",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "substack:sync": "node scripts/substack-sync.mjs plan"
   },
   "dependencies": {
     "@mdx-js/react": "^3.1.1",

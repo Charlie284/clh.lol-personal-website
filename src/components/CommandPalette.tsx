@@ -245,7 +245,7 @@ export default function CommandPalette() {
         ref={triggerRef}
         type="button"
         onClick={open}
-        className="fixed bottom-5 right-5 z-[110] hidden items-center gap-2 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors hover:border-white/20 hover:text-white md:flex"
+        className="fixed bottom-5 right-5 z-[110] hidden items-center gap-2 rounded-full border border-white/10 bg-[#050505]/95 px-4 py-3 backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors hover:border-white/20 hover:text-white md:flex"
         aria-label="Open command palette"
       >
         <Search size={14} strokeWidth={1.8} />

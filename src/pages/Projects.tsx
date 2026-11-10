@@ -17,7 +17,7 @@ const statusOptions = Array.from(
 ).sort();
 
 export default function Projects() {
-  const [searchParams, setSearchParams] = usePrerenderedSearchParams();
+  const [searchParams, setSearchParams, filtersReady] = usePrerenderedSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersRef = useRef<HTMLDivElement>(null);
   const filtersTriggerRef = useRef<HTMLButtonElement>(null);
@@ -63,11 +63,7 @@ export default function Projects() {
 
   return (
     <div className="page-shell">
-      <RouteMeta
-        title="Projects"
-        description="Apps, websites, small tools, and a homelab built by Charlie H."
-        path="/projects"
-      />
+      <RouteMeta path="/projects" />
       <motion.header
         initial={false}
         animate={{ opacity: 1, y: 0 }}
@@ -75,7 +71,7 @@ export default function Projects() {
         className="page-intro"
       >
         <h1 className="page-title">
-          Things I've <span className="italic text-white/60">built.</span>
+          Things I&rsquo;ve <span className="italic text-white/60">built.</span>
         </h1>
         <p className="page-lead mt-5">
           Apps, web tools, this site, and{" "}
@@ -106,6 +102,7 @@ export default function Projects() {
             <button
               type="button"
               ref={filtersTriggerRef}
+              disabled={!filtersReady}
               aria-expanded={filtersOpen}
               aria-controls="project-filter-fields"
               onClick={() => setFiltersOpen(!filtersOpen)}
@@ -118,7 +115,7 @@ export default function Projects() {
               type="button"
               onClick={resetFilters}
               disabled={!hasActiveFilters}
-              className={`${hasActiveFilters ? "" : "hidden sm:block"} min-h-11 text-xs font-bold uppercase tracking-[0.14em] text-white/60 underline decoration-white/20 underline-offset-4 transition-colors hover:text-white disabled:pointer-events-none disabled:opacity-30`}
+              className={`${hasActiveFilters ? "" : "hidden sm:invisible sm:block"} min-h-11 text-xs font-bold uppercase tracking-[0.14em] text-white/60 underline decoration-white/20 underline-offset-4 transition-colors hover:text-white disabled:pointer-events-none disabled:opacity-30`}
             >
               Clear filters
             </button>
@@ -130,6 +127,7 @@ export default function Projects() {
             id="technology-filter"
             label="Technology"
             value={technology}
+            disabled={!filtersReady}
             options={technologyOptions}
             allLabel="All technologies"
             onChange={(value) => updateFilter("technology", value)}
@@ -138,6 +136,7 @@ export default function Projects() {
             id="category-filter"
             label="Category"
             value={category}
+            disabled={!filtersReady}
             options={categoryOptions}
             allLabel="All categories"
             onChange={(value) => updateFilter("category", value)}
@@ -146,6 +145,7 @@ export default function Projects() {
             id="status-filter"
             label="Status"
             value={status}
+            disabled={!filtersReady}
             options={statusOptions}
             allLabel="All statuses"
             onChange={(value) => updateFilter("status", value)}
@@ -202,6 +202,7 @@ function ProjectFilter({
   id,
   label,
   value,
+  disabled,
   options,
   allLabel,
   onChange,
@@ -209,6 +210,7 @@ function ProjectFilter({
   id: string;
   label: string;
   value: string;
+  disabled: boolean;
   options: string[];
   allLabel: string;
   onChange: (value: string) => void;
@@ -224,6 +226,7 @@ function ProjectFilter({
       <select
         id={id}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         className="min-h-11 w-full rounded-lg border border-white/15 bg-[#070707] px-3 text-base text-white transition-colors hover:border-white/30"
       >

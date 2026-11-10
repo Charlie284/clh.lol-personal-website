@@ -37,10 +37,10 @@
 - **Components** – Re‑usable UI pieces:
   - `Nav` – Top‑right navigation with motion hover effects.
   - `Cursor` – Custom spring‑based cursor that disappears on touch devices.
-  - `GitHubActivity` – Links to the author's GitHub profile.
-  - `SharedCard` – Card UI for projects and blog cards with 3‑D tilt interaction.
+  - `SharedCard` – Project rows with descriptions, optional previews, and links that preserve the project-list filters when returning from a detail page.
 - **Hooks & Utilities** – Mostly native React hooks (`useState`, `useEffect`, `useTransform`, `useMotionValue`). Small custom hooks handle prerendered navigation and preferences.
 - **Tailwind Config (`tailwind.config.js`)** – Centralizes colours, fonts, and custom keyframe animations (e.g., background movement).
+- **Page Metadata** – `src/lib/routeMetadata.ts` defines static page metadata and builds the same title, social tags, and article structured data for the browser and static HTML. The server entry supplies blog metadata from the existing MDX index, so the build does not parse frontmatter separately.
 - **Content** – MDX files under `src/content/blog/` provide the blog posts, parsed by the custom `mdx` loader in `vite.config.ts`.
 
 ## Build & Deployment

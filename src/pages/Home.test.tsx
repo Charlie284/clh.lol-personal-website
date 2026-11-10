@@ -1,7 +1,32 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { renderToString } from "react-dom/server";
 import Home from "./Home";
+
+const motionPreference = vi.hoisted(() => ({ value: null as boolean | null }));
+vi.mock("framer-motion", async (importOriginal) => ({
+  ...await importOriginal<typeof import("framer-motion")>(),
+  useReducedMotion: () => motionPreference.value,
+}));
+
+describe("homepage hydration", () => {
+  afterEach(() => { motionPreference.value = null; });
+
+  it("retains the prerendered content when the browser requests reduced motion", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    container.innerHTML = renderToString(<MemoryRouter><Home /></MemoryRouter>);
+    const prerenderedHeading = container.querySelector("h1");
+    const onRecoverableError = vi.fn();
+
+    motionPreference.value = true;
+    render(<MemoryRouter><Home /></MemoryRouter>, { container, hydrate: true, onRecoverableError });
+
+    expect(container.querySelector("h1")).toBe(prerenderedHeading);
+    expect(onRecoverableError).not.toHaveBeenCalled();
+  });
+});
 
 function LocationProbe() {
   const location = useLocation();
@@ -19,42 +44,42 @@ describe("Featured work", () => {
       </MemoryRouter>,
     );
 
-    const project = await screen.findByRole("link", { name: "Open New Trier Block case study" });
-    expect(project).toHaveAttribute("href", "/projects/new-trier-block");
+    const project = await screen.findByRole("link", { name: "Open Startle case study" });
+    expect(project).toHaveAttribute("href", "/projects/startle");
     fireEvent.click(project);
 
     await waitFor(() =>
       expect(screen.getByRole("status", { name: "Current path" })).toHaveTextContent(
-        "/projects/new-trier-block",
+        "/projects/startle",
       ),
     );
   });
   it("selects side previews before navigating and wraps with arrow controls", () => {
     render(<MemoryRouter><Home /><LocationProbe /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("link", { name: "Select Startle" }));
+    fireEvent.click(screen.getByRole("link", { name: "Select New Trier Block" }));
     expect(screen.getByRole("status", { name: "Current path" })).toHaveTextContent("/");
-    expect(screen.getByRole("link", { name: "Open Startle case study" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("link", { name: "Open New Trier Block case study" })).toHaveAttribute("aria-current", "true");
     fireEvent.click(screen.getByRole("button", { name: "Previous project" }));
     fireEvent.click(screen.getByRole("button", { name: "Previous project" }));
     expect(screen.getByRole("link", { name: "Open Homelab / Server case study" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Next project" }));
-    expect(screen.getByRole("link", { name: "Open New Trier Block case study" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open Startle case study" })).toBeInTheDocument();
   });
 
   it("supports keyboard selection and opens the selected destination", () => {
     render(<MemoryRouter><Home /><LocationProbe /></MemoryRouter>);
     const gallery = screen.getByRole("region", { name: "Featured projects" });
-    screen.getByRole("link", { name: "Open New Trier Block case study" }).focus();
+    screen.getByRole("link", { name: "Open Startle case study" }).focus();
     fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
-    expect(screen.getByRole("link", { name: "Open Startle case study" })).toHaveFocus();
+    expect(screen.getByRole("link", { name: "Open New Trier Block case study" })).toHaveFocus();
     fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
     expect(screen.getByRole("link", { name: "Open Pi Calc on GitHub" })).toHaveFocus();
     fireEvent.keyDown(gallery, { key: "End" });
     expect(screen.getByRole("link", { name: "Open Homelab / Server case study" })).toBeInTheDocument();
     fireEvent.keyDown(gallery, { key: "Home" });
     fireEvent.keyDown(gallery, { key: "ArrowRight" });
-    fireEvent.click(screen.getByRole("link", { name: "Open Startle case study" }));
-    expect(screen.getByRole("status", { name: "Current path" })).toHaveTextContent("/projects/startle");
+    fireEvent.click(screen.getByRole("link", { name: "Open New Trier Block case study" }));
+    expect(screen.getByRole("status", { name: "Current path" })).toHaveTextContent("/projects/new-trier-block");
   });
 
   it("centers the selected preview after the initial project shuffle", async () => {

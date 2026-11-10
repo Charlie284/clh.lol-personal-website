@@ -13,7 +13,7 @@ export default function Nav() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-4 pointer-events-none md:pt-6">
-      <nav aria-label="Main navigation" className="pointer-events-auto flex max-w-full gap-1 rounded-[1.5rem] border border-white/[0.08] bg-[#020202]/90 p-1.5 backdrop-blur-md">
+      <nav aria-label="Main navigation" className="pointer-events-auto flex max-w-full gap-1 rounded-[1.5rem] border border-white/[0.08] bg-[#020202]/95 p-1.5 backdrop-blur-md">
         {navItems.map(({ name, to, icon: Icon }) => {
           const active = to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
           return (

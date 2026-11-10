@@ -32,16 +32,28 @@ export default function SharedCard({ item, projectsReturnTo }: { item: SharedCar
           {item.href && <ArrowUpRight size={16} aria-hidden="true" />}
         </span>
       </div>
-      {item.img && (
+      {item.img && (item.img === "/startle-app-icon.webp" ? (
+        <span className="flex aspect-[16/10] w-full items-center justify-center rounded-xl border border-white/10 bg-[#ff4a2f] p-5">
+          {/* The icon artwork is a full-bleed square; mask it like a macOS app icon. */}
+          <img
+            src={item.img}
+            alt=""
+            width={512}
+            height={512}
+            loading="lazy"
+            className="aspect-square h-full w-auto rounded-[22%]"
+          />
+        </span>
+      ) : (
         <img
           src={item.img}
           alt=""
           width={320}
           height={200}
           loading="lazy"
-          className={`aspect-[16/10] w-full rounded-xl border border-white/10 ${item.img === "/startle-app-icon.webp" ? "bg-[#ff4a2f] object-contain p-5" : "object-cover object-top"}`}
+          className="aspect-[16/10] w-full rounded-xl border border-white/10 object-cover object-top"
         />
-      )}
+      ))}
     </>
   );
   const className = `group grid gap-5 py-7 sm:py-8 md:gap-8 ${item.img ? "md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)_10rem]" : "md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] md:pr-[12rem]"}`;

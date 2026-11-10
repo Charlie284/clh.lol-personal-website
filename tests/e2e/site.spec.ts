@@ -189,6 +189,7 @@ test("prerendered pages hydrate without browser errors", async ({ page }) => {
   for (const path of paths) {
     errors.length = 0;
     await page.goto(path);
+    await expect(page.locator('[data-route-ready="true"]')).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(errors, `${path} should hydrate cleanly`).toEqual([]);
   }
@@ -220,6 +221,7 @@ test("returning visitors hydrate cleanly with saved preferences", async ({
   for (const path of ["/", "/blog", "/privacy"]) {
     errors.length = 0;
     await page.goto(path);
+    await expect(page.locator('[data-route-ready="true"]')).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(errors, `${path} should hydrate cleanly with saved preferences`).toEqual([]);
   }
