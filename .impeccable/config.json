@@ -8,6 +8,18 @@
         "value": "fraunces",
         "createdAt": "2026-10-23T16:17:07.180Z",
         "reason": "Agent triage: DESIGN.md Typography explicitly specifies Fraunces for the existing hero, page titles, and article headings; preserve the documented visual identity."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "charlie name",
+        "createdAt": "2026-11-16T19:19:32.310Z",
+        "reason": "Agent triage: scripts/optimize-fonts.py derives this small glyph subset from DESIGN.md’s Fraunces hero font at opsz 144, SOFT 100, and weight 600; the alias preserves the existing typeface while reducing first-visit downloads."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "charlie kicker",
+        "createdAt": "2026-11-16T19:19:32.366Z",
+        "reason": "Agent triage: scripts/optimize-fonts.py derives this small greeting subset from DESIGN.md’s Fraunces hero font at opsz 40, SOFT 50, and weight 500; the alias preserves the existing typeface while reducing first-visit downloads."
       }
     ]
   }

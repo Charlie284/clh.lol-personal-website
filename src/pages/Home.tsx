@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import {
-  motion,
+  m as motion,
   useMotionValue,
   useScroll,
   useSpring,
@@ -119,66 +119,38 @@ function HeroLetter({
   index,
   pointerX,
   interactive,
-  prefersReducedMotion,
 }: {
   letter: string;
   index: number;
   pointerX: MotionValue<number>;
   interactive: boolean;
-  prefersReducedMotion: boolean | null;
 }) {
-  const normalizedIndex = index / (heroNameLetters.length - 1);
-  const depth = Math.sin(normalizedIndex * Math.PI) * -60;
+  const ref = useRef<HTMLSpanElement>(null);
+  const depth = Math.sin(index / (heroNameLetters.length - 1) * Math.PI) * -60;
   const letterCenter = (index + 0.5) / heroNameLetters.length - 0.5;
-  const scale = useTransform(pointerX, [-0.5, 0, 0.5], [0.94, 1, 1.06]);
-  const baseBrightness = useTransform(pointerX, [-0.5, 0, 0.5], [0.7, 1.15, 0.7]);
-  const spot = useTransform(pointerX, (position) =>
-    Math.max(0, 1 - Math.abs(position - letterCenter) * 4),
-  );
-  const brightness = useTransform(
-    [baseBrightness, spot],
-    ([base, highlight]: number[]) => base + highlight * 0.5,
-  );
-  const filter = useTransform(brightness, (value) => `brightness(${value})`);
+
+  React.useEffect(() => {
+    const span = ref.current;
+    if (!span) return;
+    const update = (position: number) => {
+      const scale = interactive ? 1 + Math.max(-0.5, Math.min(0.5, position)) * 0.12 : 1;
+      const base = 1.15 - Math.min(0.5, Math.abs(position)) * 0.9;
+      const spot = Math.max(0, 1 - Math.abs(position - letterCenter) * 4);
+      span.style.transform = `translateZ(${depth}px) scale(${scale})`;
+      span.style.filter = `brightness(${interactive ? base + spot * 0.5 : 1})`;
+    };
+    update(pointerX.get());
+    return pointerX.on("change", update);
+  }, [depth, interactive, letterCenter, pointerX]);
 
   return (
-    <motion.span
-      style={{
-        z: depth,
-        scale: interactive ? scale : 1,
-        filter: interactive ? filter : "brightness(1)",
-        transformStyle: "preserve-3d",
-      }}
-      initial={false}
-      animate={{
-        opacity: 1,
-        y: 0,
-        z: depth,
-        rotateX: 0,
-        filter: "blur(0px)",
-      }}
-      transition={
-        prefersReducedMotion
-          ? { duration: 0 }
-          : {
-              default: {
-                type: "spring",
-                damping: 16,
-                stiffness: 180,
-                mass: 1,
-                delay: 0.3 + index * 0.08,
-              },
-              filter: {
-                duration: 0.4,
-                delay: 0.3 + index * 0.08,
-                ease: [0.22, 1, 0.36, 1],
-              },
-            }
-      }
+    <span
+      ref={ref}
+      style={{ transform: `translateZ(${depth}px)`, transformStyle: "preserve-3d" }}
       className="inline-block will-change-transform"
     >
       {letter}
-    </motion.span>
+    </span>
   );
 }
 
@@ -219,7 +191,7 @@ function HeroName({ prefersReducedMotion }: { prefersReducedMotion: boolean | nu
     >
       {/* "Hi, I'm" — quiet italic kicker, no tilt */}
       <motion.div
-        style={{ fontVariationSettings: "'opsz' 40, 'SOFT' 50" }}
+        style={{ fontFamily: '"Charlie Kicker", Fraunces, Georgia, serif' }}
         className="font-hero text-[clamp(2rem,8vw,4.5rem)] italic text-white/55 leading-none mb-2"
       >
         <motion.span
@@ -234,7 +206,7 @@ function HeroName({ prefersReducedMotion }: { prefersReducedMotion: boolean | nu
       {/* "Charlie" — the star: per-letter 3D depth + cursor spotlight */}
       <motion.h1
         aria-label="Charlie"
-        style={{ fontVariationSettings: "'opsz' 144, 'SOFT' 100", fontWeight: 600 }}
+        style={{ fontFamily: '"Charlie Name", Fraunces, Georgia, serif', fontWeight: 600 }}
         className="font-hero text-[clamp(3.5rem,15vw,12rem)] leading-[0.85] text-white relative"
       >
         <span className="flex items-baseline">
@@ -245,7 +217,6 @@ function HeroName({ prefersReducedMotion }: { prefersReducedMotion: boolean | nu
               index={index}
               pointerX={px}
               interactive={interactive}
-              prefersReducedMotion={prefersReducedMotion}
             />
           ))}
         </span>
@@ -295,8 +266,6 @@ const projectPool: FeaturedProject[] = projectsList.map((project) => ({
 const featuredCount = 6;
 const leadProject = projectPool.find((project) => project.href === "/projects/startle") ?? projectPool[0];
 const otherProjects = projectPool.filter((project) => project !== leadProject);
-
-const MotionLink = motion.create(Link);
 
 function FeaturedWorkSection({
   featuredProjects,
@@ -399,8 +368,7 @@ function FeaturedWorkSection({
                 const selected = offset === 0;
                 const visible = Math.abs(offset) <= 1;
                 return (
-                  <MotionLink
-                    // Reinitialize motion values when the hydration shuffle moves a preview.
+                  <Link
                     key={`${index}:${item.href}`}
                     to={item.href}
                     target={item.external ? "_blank" : undefined}
@@ -420,17 +388,13 @@ function FeaturedWorkSection({
                         selectProject(index);
                       }
                     }}
-                    initial={false}
-                    animate={{
-                      x: `${offset * 68}%`,
-                      scale: selected ? 1 : 0.76,
-                      rotateY: prefersReducedMotion ? 0 : offset * -22,
+                    style={{
+                      zIndex: selected ? 3 : 1,
+                      pointerEvents: visible ? "auto" : "none",
+                      transform: selected ? "none" : `translateX(${offset * 68}%) scale(0.76) rotateY(${prefersReducedMotion ? 0 : offset * -22}deg)`,
                       opacity: selected ? 1 : visible ? 0.65 : 0,
+                      transition: prefersReducedMotion ? "none" : "transform 450ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease",
                     }}
-                    transition={prefersReducedMotion
-                      ? { duration: 0 }
-                      : { type: "spring", stiffness: 170, damping: 26 }}
-                    style={{ zIndex: selected ? 3 : 1, pointerEvents: visible ? "auto" : "none" }}
                     className={`coverflow-card ${item.media?.frameClassName ?? "bg-[#101114]"}`}
                   >
                     {item.media?.inset ? (
@@ -440,7 +404,8 @@ function FeaturedWorkSection({
                           alt={`${item.title} preview`}
                           width={item.media.width}
                           height={item.media.height}
-                          loading={selected ? "eager" : "lazy"}
+                          loading="lazy"
+                          fetchPriority="low"
                           decoding="async"
                           draggable={false}
                           className="aspect-square h-full w-auto max-w-full rounded-[22%] object-contain"
@@ -452,7 +417,8 @@ function FeaturedWorkSection({
                         alt={`${item.title} preview`}
                         width={item.media.width}
                         height={item.media.height}
-                        loading={selected ? "eager" : "lazy"}
+                        loading="lazy"
+                        fetchPriority="low"
                         decoding="async"
                         draggable={false}
                         className="h-full w-full object-contain"
@@ -464,7 +430,7 @@ function FeaturedWorkSection({
                         <p className="text-xs text-white/85 sm:text-sm">{item.kicker}</p>
                       </div>
                     )}
-                  </MotionLink>
+                  </Link>
                 );
               })}
             </div>

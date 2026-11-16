@@ -1,6 +1,5 @@
 import React, {
   Suspense,
-  lazy,
   useCallback,
   useEffect,
   useState,
@@ -11,8 +10,9 @@ import {
   useLocation,
   useRoutes,
 } from "react-router-dom";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { clientPages } from "./lib/clientPages";
 import Layout from "./components/Layout.tsx";
+import { RouteReadinessContext } from "./lib/routeReadiness";
 import CookieConsent from "./components/CookieConsent.tsx";
 import PageErrorBoundary from "./components/PageErrorBoundary.tsx";
 import {
@@ -41,55 +41,39 @@ export type AppPageComponents = {
   NewTrierBlock: ComponentType;
 };
 
-const clientPages: AppPageComponents = {
-  Home: lazy(() => import("./pages/Home.tsx")),
-  Projects: lazy(() => import("./pages/Projects.tsx")),
-  BlogPage: lazy(() => import("./pages/BlogPage.tsx")),
-  BlogPostPage: lazy(() => import("./pages/BlogPostPage.tsx")),
-  Privacy: lazy(() => import("./pages/Privacy.tsx")),
-  NewsletterConfirmed: lazy(() => import("./pages/NewsletterConfirmed.tsx")),
-  NotFound: lazy(() => import("./pages/NotFound.tsx")),
-  Server: lazy(() => import("./pages/projects/Server.tsx")),
-  ThisWebsite: lazy(() => import("./pages/projects/ThisWebsite.tsx")),
-  NewTrierBlock: lazy(() => import("./pages/projects/NewTrierBlock.tsx")),
-  Startle: lazy(() => import("./pages/projects/Startle.tsx")),
-};
-
 const PreviousPageContext = React.createContext<React.RefObject<string> | null>(null);
 
 const PageWrapper = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const prefersReducedMotion = useReducedMotion();
   const mountedPath = React.useRef(location.pathname).current;
   const previousPage = React.useContext(PreviousPageContext);
+  const [animateEntry] = useState(() => Boolean(previousPage && previousPage.current !== mountedPath));
   const pageRef = React.useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
+  const markReady = useCallback(() => setIsReady(true), []);
 
   useEffect(() => {
-    setIsReady(true);
-    if (!previousPage || previousPage.current === mountedPath) return;
+    if (!isReady || !previousPage || previousPage.current === mountedPath) return;
     previousPage.current = mountedPath;
-    // This runs after the incoming route mounts, including lazy routes and
-    // the outgoing page's exit animation. Search parameter updates stay put.
+    // Lazy routes receive focus only after their handlers mount.
+    // Search parameter updates stay put.
     const target = pageRef.current?.querySelector<HTMLElement>("h1") ?? pageRef.current;
     if (target) {
       target.tabIndex = -1;
       target.focus({ preventScroll: true });
     }
-  }, [mountedPath, previousPage]);
+  }, [isReady, mountedPath, previousPage]);
 
   return (
-    <motion.div
-      ref={pageRef}
-      data-route-ready={isReady}
-      initial={false}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: prefersReducedMotion ? 1 : 0 }}
-      transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="relative z-10 w-full min-h-screen"
-    >
-      {children}
-    </motion.div>
+    <RouteReadinessContext.Provider value={markReady}>
+      <div
+        ref={pageRef}
+        data-route-ready={isReady}
+        className={`relative z-10 w-full min-h-screen${animateEntry ? " route-enter" : ""}`}
+      >
+        {children}
+      </div>
+    </RouteReadinessContext.Provider>
   );
 };
 
@@ -225,13 +209,11 @@ function AnimatedRoutes({ pages }: { pages: AppPageComponents }) {
   return (
     <PreviousPageContext.Provider value={previousPage}>
       <Layout>
-        <AnimatePresence mode="wait">
-          {/* Each destination owns its loading state so a suspended route cannot
-              hide the transition manager or block a later navigation. */}
-          <Suspense key={location.pathname} fallback={<LoadingFallback />}>
-            <PageErrorBoundary>{element}</PageErrorBoundary>
-          </Suspense>
-        </AnimatePresence>
+        {/* A suspended destination must never hold up a later navigation.
+            The incoming page owns its short CSS fade and focus handling. */}
+        <Suspense key={location.pathname} fallback={<LoadingFallback />}>
+          <PageErrorBoundary>{element}</PageErrorBoundary>
+        </Suspense>
       </Layout>
     </PreviousPageContext.Provider>
   );

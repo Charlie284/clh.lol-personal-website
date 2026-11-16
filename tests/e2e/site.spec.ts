@@ -452,7 +452,7 @@ test("production app reloads and navigates previously visited pages offline", as
     }
   });
   await page.locator("header").getByRole("link", { name: "Projects" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(/Things I've\s*built/i);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/Things I’ve\s*built/i);
   await expect(page.locator('[data-route-ready="true"]')).toBeVisible();
   await page.locator("header").getByRole("link", { name: "Home" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Charlie" })).toBeVisible();
@@ -497,7 +497,7 @@ test("production app reloads and navigates previously visited pages offline", as
 
     await page.locator("header").getByRole("link", { name: "Projects" }).click();
     await expect(page).toHaveURL(/\/projects$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Things I've\s*built/i);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Things I’ve\s*built/i);
     expect(failedOfflineAssets, "same-origin assets should load from the service-worker cache")
       .toEqual([]);
   } finally {

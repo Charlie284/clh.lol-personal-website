@@ -18,7 +18,7 @@ function chunkResources(keys: string[]) {
 }
 
 for (const route of [
-  { path: "/projects", title: /Things I've\s*built/i, chunks: ["src/pages/Projects.tsx"] },
+  { path: "/projects", title: /Things I’ve\s*built/i, chunks: ["src/pages/Projects.tsx"] },
   {
     path: "/blog/why-i-hate-raycast",
     title: /Why I Hate Raycast/i,

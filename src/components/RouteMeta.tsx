@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useContext, useEffect, useLayoutEffect } from "react";
+import { RouteReadinessContext } from "../lib/routeReadiness";
 import { resolveMetadata, staticPageMetadata, type RouteMetadata } from "../lib/routeMetadata";
 
 type RouteMetaProps = RouteMetadata | { path: keyof typeof staticPageMetadata };
@@ -29,6 +30,8 @@ function setArticleStructuredData(data: Record<string, unknown>) {
 }
 
 export default function RouteMeta(props: RouteMetaProps) {
+  const markReady = useContext(RouteReadinessContext);
+  useLayoutEffect(() => { markReady?.(); }, [markReady]);
   const route: RouteMetadata = "title" in props
     ? props : { path: props.path, ...staticPageMetadata[props.path] };
   const { title, description, path, type, image, noIndex, publishedTime, modifiedTime } = route;

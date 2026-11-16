@@ -1,6 +1,6 @@
 # clh.lol source
 
-A high-performance, visually immersive personal portfolio built with React 19, Vite, TypeScript, and Tailwind CSS. This project features advanced Framer Motion animations, scroll-linked effects, and a custom interactive design.
+A high-performance, visually immersive personal portfolio built with React API components, Preact’s compatibility runtime, Vite, TypeScript, and Tailwind CSS. This project features advanced Framer Motion animations, scroll-linked effects, and a custom interactive design.
 
 ## Key Features & Recent Upgrades
 
@@ -15,7 +15,7 @@ A high-performance, visually immersive personal portfolio built with React 19, V
 
 ## Tech Stack
 
-- **Framework:** [React 19](https://react.dev/)
+- **UI:** React API components rendered with [Preact compatibility](https://preactjs.com/guide/v11/getting-started/).
 - **Build Tool:** [Vite](https://vitejs.dev/)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/) with a small global CSS file for fonts and effects.
@@ -53,6 +53,7 @@ src/
 - `npm run lint` checks JavaScript, TypeScript, React hooks, and Vite modules.
 - `npm run type-check` runs TypeScript without emitting files.
 - `npm test` runs the Vitest unit and component suite.
+- `npm run test:performance` checks cold homepage interactivity against a one-second budget on desktop and mobile (1.6 Mbps, 150 ms latency, 4× CPU). Run it on an otherwise idle machine.
 - `npm run test:e2e` builds the site and runs Playwright in desktop and mobile Chromium.
 - `npm run check` runs linting, type checking, unit tests, and the production build.
 
@@ -90,10 +91,15 @@ submission does not set the preference.
 ### Static asset performance
 
 Fonts are bundled as local Latin-subset WOFF2 files with their OFL licenses in
-`src/assets/fonts`. The hero and body fonts are preloaded; optional font display
-avoids a late font swap on slow connections. Screenshots use WebP and images
+`src/assets/fonts`. The homepage preloads small, exact hero-lettering instances
+and a body-font subset. The remaining faces load after the critical resources;
+other routes include those styles immediately for their page titles. Unicode
+fallback faces preserve the remaining Latin glyphs. Font display uses swap so
+the intended typefaces appear even on slow connections. Screenshots use WebP and images
 below the homepage hero load lazily. Blog listings ship metadata; article code
-loads when opened, while the build still prerenders complete article HTML.
+loads when opened, while the build still prerenders complete article HTML. Each
+HTML page preloads its route chunk and static dependencies, including the selected
+article, so first visits do not wait for the app shell to discover them.
 
 The service worker precaches the homepage shell and caches other pages and static
 resources when visited. Previously visited pages work offline; an offline HTML
@@ -101,3 +107,7 @@ shell restores routes from cached JavaScript when their page HTML was not cached
 Unvisited pages require a connection. Hashed build assets use immutable caching;
 public images revalidate after one day, and the worker itself is never long-term
 cached.
+
+The optional `python3 scripts/optimize-fonts.py` command regenerates the committed
+subsets from their original bundled fonts (requires `fonttools[woff]`). Normal
+Node builds use the committed files and do not require Python.

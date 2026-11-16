@@ -23,7 +23,7 @@ async function listFiles(directory, prefix = "") {
 
 const allFiles = await listFiles(distDir);
 const manifest = JSON.parse(await readFile(path.join(distDir, ".vite/manifest.json"), "utf8"));
-const precacheFiles = new Set(["index.html", "offline.html", "logo.svg", "manifest.json"]);
+const precacheFiles = new Set(["index.html", "offline.html", "logo.svg", "signature.svg", "manifest.json"]);
 
 function addChunk(key) {
   const chunk = manifest[key];

@@ -32,7 +32,7 @@ test("case-study back link restores the project filters", async ({ page }) => {
   expect(errors).toEqual([]);
   await page.getByRole("link", { name: "Back to projects", exact: true }).click();
   await expect(page).toHaveURL(/\/projects\?technology=Flutter&status=In\+progress$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Things I've built.", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Things I’ve built.", exact: true })).toBeVisible();
   const filters = page.getByRole("button", { name: /^Filter projects/ });
   if (await filters.isVisible()) await filters.click();
   await expect(page.getByRole("combobox", { name: "Technology" })).toHaveValue("Flutter");

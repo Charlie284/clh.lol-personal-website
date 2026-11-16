@@ -1,0 +1,34 @@
+/* These faces are below the homepage hero. Other routes include this sheet
+   in their HTML so their page titles retain the same first-paint typography. */
+@font-face {
+    font-family: "Fraunces";
+    font-style: normal;
+    font-weight: 500 900;
+    font-display: swap;
+    src: url("../fonts/fraunces-text.woff2") format("woff2");
+    unicode-range: U+20-7E, U+A0, U+A9, U+B7, U+2000-206F;
+}
+@font-face {
+    font-family: "Fraunces";
+    font-style: normal;
+    font-weight: 500 900;
+    font-display: swap;
+    src: url("../fonts/fraunces-latin.woff2") format("woff2");
+    unicode-range: U+A1-A8, U+AA-B6, U+B8-FF, U+20AC;
+}
+@font-face {
+    font-family: "Syne";
+    font-style: normal;
+    font-weight: 700 800;
+    font-display: swap;
+    src: url("../fonts/syne-headings.woff2") format("woff2");
+    unicode-range: U+20-7E, U+A0, U+A9, U+B7, U+2000-206F;
+}
+@font-face {
+    font-family: "Syne";
+    font-style: normal;
+    font-weight: 700 800;
+    font-display: swap;
+    src: url("../fonts/syne-latin.woff2") format("woff2");
+    unicode-range: U+A1-A8, U+AA-B6, U+B8-FF, U+20AC;
+}

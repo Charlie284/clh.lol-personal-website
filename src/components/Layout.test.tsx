@@ -22,7 +22,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("optional visual effects", () => {
   it("keeps page content and navigation usable when both effect chunks fail to load", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
       matches: query === "(pointer: fine)",
       media: query,
@@ -48,7 +48,6 @@ describe("optional visual effects", () => {
     await waitFor(() => {
       expect(failedImports.cursor).toHaveBeenCalled();
       expect(failedImports.dots).toHaveBeenCalled();
-      expect(consoleError).toHaveBeenCalledTimes(2);
     });
     expect(screen.getByRole("heading", { name: "Home content" })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();

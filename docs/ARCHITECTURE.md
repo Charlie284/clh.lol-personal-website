@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**clh.lol** is a statically hosted React application built with Vite. Each public route is rendered to HTML during the production build, then React hydrates that HTML in the browser to provide client-side navigation and interactions.
+**clh.lol** is a statically hosted application built with Vite. Components use the React API; Vite aliases React and React DOM to Preact compatibility for both browser and build-time rendering. Each public route is rendered to HTML during the production build, then Preact hydrates that HTML to provide client-side navigation and interactions. Vitest uses the same aliases and Preact's testing adapter.
 
 ```
 +----------------------------------------------------------+
@@ -33,7 +33,7 @@
 - **entry-server.tsx** – Build-only rendering entry point. It renders a requested route to a string and is not deployed as a server.
 - **main.tsx** – Hydrates prerendered markup in production and falls back to a normal client render during development.
 - **Layout.tsx** – Handles the background, mouse spotlight, responsive behavior, and global navigation and interaction wrappers.
-- **Pages** – `Home`, `Projects`, `BlogPage`, `BlogPostPage`, etc. Each page is a functional component that composes reusable UI components and uses Framer Motion for entry/exit animations.
+- **Pages** – `Home`, `Projects`, `BlogPage`, `BlogPostPage`, etc. Each page is a functional component that composes reusable UI components. Incoming routes use a short CSS fade; animation features for the page use Framer Motion. A pending lazy route cannot block navigation to another destination.
 - **Components** – Re‑usable UI pieces:
   - `Nav` – Top‑right navigation with motion hover effects.
   - `Cursor` – Custom spring‑based cursor that disappears on touch devices.
@@ -48,7 +48,7 @@
 - **Vite** compiles the browser application and a temporary build-time rendering entry point.
 - `scripts/generate-static-metadata.mjs` renders all 29 application routes into `dist/`, injects route-specific metadata and structured data, generates `sitemap.xml`, and writes the top-level `404.html` used by static hosts.
 - The temporary `.prerender/` bundle is deleted after generation. The deployed output is still only static HTML, CSS, JavaScript, and assets; no Node.js or application server runs in production.
-- React hydrates the generated HTML without replacing the page, preserving the existing animations, navigation, and route-level code splitting. The HTML also remains readable when JavaScript is unavailable.
+- Preact hydrates the generated HTML without replacing the page, preserving the existing animations, navigation, and route-level code splitting. The HTML also remains readable when JavaScript is unavailable.
 - Asset handling is performed via Vite's built‑in static asset handling: any files in `public/` are copied as‑is to `dist/`.
 
 ---

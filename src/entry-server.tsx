@@ -15,9 +15,27 @@ import Server from "./pages/projects/Server";
 import NewTrierBlock from "./pages/projects/NewTrierBlock";
 import Startle from "./pages/projects/Startle";
 import ThisWebsite from "./pages/projects/ThisWebsite";
-import { getBlogMetadata, staticPageMetadata } from "./lib/routeMetadata";
+import { getBlogMetadata, staticPageMetadata, notFoundMetadata as missingPageMetadata } from "./lib/routeMetadata";
 
-export { notFoundMetadata, offlineMetadata, resolveMetadata, siteUrl } from "./lib/routeMetadata";
+export { offlineMetadata, resolveMetadata, siteUrl } from "./lib/routeMetadata";
+
+// These are browser manifest IDs; only the requested route is preloaded.
+const pageModuleIds: Record<keyof typeof staticPageMetadata, string> = {
+  "/": "src/pages/Home.tsx",
+  "/projects": "src/pages/Projects.tsx",
+  "/blog": "src/pages/BlogPage.tsx",
+  "/privacy": "src/pages/Privacy.tsx",
+  "/newsletter-confirmed": "src/pages/NewsletterConfirmed.tsx",
+  "/projects/server": "src/pages/projects/Server.tsx",
+  "/projects/startle": "src/pages/projects/Startle.tsx",
+  "/projects/new-trier-block": "src/pages/projects/NewTrierBlock.tsx",
+  "/projects/thiswebsite": "src/pages/projects/ThisWebsite.tsx",
+};
+
+export const notFoundMetadata = {
+  ...missingPageMetadata,
+  preloadModules: ["src/pages/NotFound.tsx", "src/assets/styles/secondary-fonts.css"],
+};
 
 const blogMetadata = import.meta.glob<BlogPostFrontmatter>("/src/content/blog/*.mdx", {
   eager: true,
@@ -26,12 +44,23 @@ const blogMetadata = import.meta.glob<BlogPostFrontmatter>("/src/content/blog/*.
 });
 
 export const prerenderRoutes = [
-  ...Object.entries(staticPageMetadata).map(([path, metadata]) => ({ path, ...metadata })),
+  ...Object.entries(staticPageMetadata).map(([path, metadata]) => ({
+    path,
+    ...metadata,
+    deferredStylesheets: path === "/" ? ["src/assets/styles/secondary-fonts.css"] : [],
+    preloadModules: [
+      pageModuleIds[path as keyof typeof staticPageMetadata],
+      ...(path === "/" ? [] : ["src/assets/styles/secondary-fonts.css"]),
+    ],
+  })),
   ...Object.entries(blogMetadata).map(([file, meta]) => {
     if (!meta.slug || !meta.title || !meta.description || !meta.date) {
       throw new Error(`Missing required frontmatter in ${file}`);
     }
-    return getBlogMetadata(meta);
+    return {
+      ...getBlogMetadata(meta),
+      preloadModules: ["src/pages/BlogPostPage.tsx", file.slice(1), "src/assets/styles/secondary-fonts.css"],
+    };
   }),
 ];
 

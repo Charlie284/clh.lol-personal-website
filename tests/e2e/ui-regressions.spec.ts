@@ -405,7 +405,7 @@ test.describe("delayed route navigation", () => {
         await nav.getByRole("link", { name: "Blog", exact: true }).click();
         await expect(loading).toBeVisible();
         await nav.getByRole("link", { name: "Projects", exact: true }).click();
-        await expect(page.getByRole("heading", { level: 1 })).toHaveText("Things I've built.");
+        await expect(page.getByRole("heading", { level: 1 })).toHaveText("Things I’ve built.");
         await expect(page.locator('[data-route-ready="true"]')).toHaveCSS("opacity", "1");
         await expect(loading).toBeHidden();
         await nav.getByRole("link", { name: "Blog", exact: true }).click();

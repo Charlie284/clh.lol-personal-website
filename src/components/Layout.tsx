@@ -1,13 +1,14 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  motion,
+  m as motion,
   useScroll,
   useTransform,
   useSpring,
   useMotionValue,
   useReducedMotion,
   MotionConfig,
+  LazyMotion,
 } from "framer-motion";
 import Nav from "./Nav";
 import CommandPalette from "./CommandPalette";
@@ -16,6 +17,17 @@ import PageErrorBoundary from "./PageErrorBoundary";
 
 const Cursor = lazy(() => import("./Cursor"));
 const InteractiveDots = lazy(() => import("./InteractiveDots"));
+
+// Motion enhances the already usable page after its critical resources finish.
+const loadAnimationFeatures = async () => {
+  if (document.readyState !== "complete") {
+    await new Promise<void>(resolve => window.addEventListener("load", () => resolve(), { once: true }));
+  }
+  return import("./animationFeatures").then(module => module.default).catch(() =>
+    // Keep the optional feature loader pending; the native page stays usable.
+    new Promise<never>(() => {}),
+  );
+};
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -133,7 +145,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, [isMobile, mouseX, mouseY]);
 
   return (
-    <MotionConfig reducedMotion="user">
+    <LazyMotion features={loadAnimationFeatures}><MotionConfig reducedMotion="user">
       <div className="fixed inset-0 z-0 pointer-events-none bg-[#020203] overflow-hidden text-white">
         {/* Primary ambient beam — drifts with scroll, hue shifts cool->warm->cool */}
         <motion.div
@@ -210,6 +222,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </footer>
-    </MotionConfig>
+    </MotionConfig></LazyMotion>
   );
 }

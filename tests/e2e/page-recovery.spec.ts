@@ -32,7 +32,7 @@ for (const destination of ["project archive", "article"] as const) {
     await expect(page.locator('[data-route-ready="true"]')).toBeVisible();
     await expect(page.getByRole("alert")).toHaveCount(0);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      destination === "project archive" ? "Things I've built." : "Why I Hate Raycast",
+      destination === "project archive" ? "Things I’ve built." : "Why I Hate Raycast",
     );
     if (destination === "article") {
       await expect(page.locator(".blog-prose > *").first()).toBeVisible();

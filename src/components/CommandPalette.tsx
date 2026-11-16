@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ElementType } from "react";
 import {
   ArrowUpRight,
   BookOpen,
@@ -144,7 +144,7 @@ export default function CommandPalette() {
     setActiveIndex(0);
   }, [query]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) return;
     document.querySelectorAll<HTMLElement>("[popover]").forEach((popover) => {
       popover.hidePopover?.();
@@ -182,7 +182,7 @@ export default function CommandPalette() {
     };
   }, [isOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) return;
     dialogRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')
       ?.scrollIntoView?.({ block: "nearest", behavior: "instant" });

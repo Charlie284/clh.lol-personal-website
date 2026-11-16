@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { MDXProvider } from "@mdx-js/react";
 import App from "./App";
+import { prepareInitialPage } from "./lib/clientPages";
 
 // Import CSS
 import "./assets/styles/index.css";
@@ -17,10 +18,26 @@ const app = (
   </React.StrictMode>
 );
 
-if (rootElement.hasChildNodes()) {
-  ReactDOM.hydrateRoot(rootElement, app);
+const loadSecondaryFonts = () => {
+  import("./assets/styles/secondary-fonts.css").catch(() => {});
+};
+
+const mountApp = () => {
+  if (rootElement.hasChildNodes()) {
+    ReactDOM.hydrateRoot(rootElement, app);
+  } else {
+    ReactDOM.createRoot(rootElement).render(app);
+  }
+  // The hero uses small, exact font instances. Other faces enhance the
+  // below-fold content after the page's handlers have been attached.
+  if (document.readyState === "complete") loadSecondaryFonts();
+  else window.addEventListener("load", loadSecondaryFonts, { once: true });
+};
+
+if (window.location.pathname === "/" && rootElement.hasChildNodes()) {
+  prepareInitialPage().then(mountApp, mountApp);
 } else {
-  ReactDOM.createRoot(rootElement).render(app);
+  mountApp();
 }
 
 if ("serviceWorker" in navigator) {

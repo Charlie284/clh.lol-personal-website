@@ -57,6 +57,45 @@ const setRenderedContent = (html, content) => {
   return html.replace(root, () => `<div id="root">${content}</div>`);
 };
 
+const manifest = JSON.parse(await readFile(path.join(distDir, ".vite/manifest.json"), "utf8"));
+
+const addRoutePreloads = (html, route) => {
+  const existingAssets = new Set(Array.from(
+    html.matchAll(/<(?:link|script)\b[^>]*(?:href|src)=["']([^"']+)["'][^>]*>/gi),
+    (match) => match[1],
+  ));
+  const visited = new Set();
+  const links = [];
+  const addChunk = (key) => {
+    if (visited.has(key)) return;
+    visited.add(key);
+    const chunk = manifest[key];
+    if (!chunk) throw new Error(`Missing browser chunk for ${key}`);
+    const url = `/${chunk.file}`;
+    if (!existingAssets.has(url)) {
+      existingAssets.add(url);
+      links.push(chunk.file.endsWith(".css")
+        ? `<link rel="stylesheet" crossorigin href="${escapeHtml(url)}">`
+        : `<link rel="modulepreload" crossorigin href="${escapeHtml(url)}">`);
+    }
+    for (const file of chunk.css ?? []) {
+      const stylesheet = `/${file}`;
+      if (existingAssets.has(stylesheet)) continue;
+      existingAssets.add(stylesheet);
+      links.push(`<link rel="stylesheet" crossorigin href="${escapeHtml(stylesheet)}">`);
+    }
+    // Dynamic imports remain on demand; an article must not fetch the archive.
+    for (const dependency of chunk.imports ?? []) addChunk(dependency);
+  };
+  for (const key of route.preloadModules ?? []) addChunk(key);
+  for (const key of route.deferredStylesheets ?? []) {
+    const chunk = manifest[key];
+    if (!chunk) throw new Error(`Missing deferred stylesheet for ${key}`);
+    links.push(`<noscript><link rel="stylesheet" href="/${escapeHtml(chunk.file)}"></noscript>`);
+  }
+  return html.replace("</head>", () => `${links.join("\n")}\n</head>`);
+};
+
 const template = await readFile(path.join(distDir, "index.html"), "utf8");
 for (const route of routes) {
   const outputs = route.path === "/"
@@ -66,7 +105,7 @@ for (const route of routes) {
         path.join(distDir, route.path.slice(1), "index.html"),
       ];
   const content = await render(route.path);
-  const html = setRenderedContent(renderMetadata(template, route), content);
+  const html = setRenderedContent(addRoutePreloads(renderMetadata(template, route), route), content);
   for (const output of outputs) {
     await mkdir(path.dirname(output), { recursive: true });
     await writeFile(output, html, "utf8");
@@ -77,7 +116,7 @@ for (const route of routes) {
 // An empty root uses the normal client render path instead of hydrating a 404.
 await writeFile(path.join(distDir, "offline.html"), renderMetadata(template, offlineMetadata), "utf8");
 
-const notFound = setRenderedContent(renderMetadata(template, notFoundMetadata), await render("/404"));
+const notFound = setRenderedContent(addRoutePreloads(renderMetadata(template, notFoundMetadata), notFoundMetadata), await render("/404"));
 await writeFile(path.join(distDir, "404.html"), notFound, "utf8");
 
 const sitemapRoutes = routes

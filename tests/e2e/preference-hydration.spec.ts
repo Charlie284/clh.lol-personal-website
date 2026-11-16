@@ -59,7 +59,7 @@ test("shared section links survive hydration and returning from another route", 
   await expect(page.locator("#faq")).toBeInViewport();
 
   await page.getByRole("link", { name: "Projects", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Things I've built.", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Things I’ve built.", exact: true })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole("heading", { level: 1, name: "Charlie", exact: true })).toBeVisible();
   await expect(page.locator("#faq")).toBeInViewport();

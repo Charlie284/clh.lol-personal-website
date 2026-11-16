@@ -1,5 +1,5 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
+import { m as motion } from "framer-motion";
 import { Home, Briefcase, BookOpen } from "lucide-react";
 
 const navItems = [
@@ -17,10 +17,10 @@ export default function Nav() {
         {navItems.map(({ name, to, icon: Icon }) => {
           const active = to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
           return (
-            <NavLink
+            <Link
               key={to}
               to={to}
-              end={to === "/"}
+              aria-current={active ? "page" : undefined}
               aria-label={name}
               className={`relative flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 sm:min-w-16 sm:px-3 transition-colors ${active ? "text-white" : "text-white/70 hover:text-white"}`}
             >
@@ -29,7 +29,7 @@ export default function Nav() {
               )}
               <Icon size={18} strokeWidth={1.5} className="relative" aria-hidden="true" />
               <span className="relative text-xs font-bold uppercase tracking-[0.06em]">{name}</span>
-            </NavLink>
+            </Link>
           );
         })}
       </nav>
