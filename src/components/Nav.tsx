@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import { m as motion } from "framer-motion";
 import { Home, Briefcase, BookOpen } from "lucide-react";
 
 const navItems = [
@@ -25,7 +24,7 @@ export default function Nav() {
               className={`relative flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 sm:min-w-16 sm:px-3 transition-colors ${active ? "text-white" : "text-white/70 hover:text-white"}`}
             >
               {active && (
-                <motion.span layoutId="active-pill" className="absolute inset-0 rounded-2xl border border-white/10 bg-white/[0.06]" transition={{ duration: 0.2 }} />
+                <span className="absolute inset-0 rounded-2xl border border-white/10 bg-white/[0.06]" />
               )}
               <Icon size={18} strokeWidth={1.5} className="relative" aria-hidden="true" />
               <span className="relative text-xs font-bold uppercase tracking-[0.06em]">{name}</span>

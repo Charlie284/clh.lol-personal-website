@@ -53,7 +53,7 @@ src/
 - `npm run lint` checks JavaScript, TypeScript, React hooks, and Vite modules.
 - `npm run type-check` runs TypeScript without emitting files.
 - `npm test` runs the Vitest unit and component suite.
-- `npm run test:performance` checks cold homepage interactivity against a one-second budget on desktop and mobile (1.6 Mbps, 150 ms latency, 4× CPU). Run it on an otherwise idle machine.
+- `npm run test:performance` checks cold homepage interactivity against a one-second budget on desktop and mobile (1.6 Mbps, 150 ms latency, 4× CPU). Run it on an otherwise idle machine. To measure production with the same empty-cache budget, use `node scripts/measure-cold-load.mjs --url=https://clh.lol/`.
 - `npm run test:e2e` builds the site and runs Playwright in desktop and mobile Chromium.
 - `npm run check` runs linting, type checking, unit tests, and the production build.
 
@@ -99,7 +99,9 @@ the intended typefaces appear even on slow connections. Screenshots use WebP and
 below the homepage hero load lazily. Blog listings ship metadata; article code
 loads when opened, while the build still prerenders complete article HTML. Each
 HTML page preloads its route chunk and static dependencies, including the selected
-article, so first visits do not wait for the app shell to discover them.
+article, so first visits do not wait for the app shell to discover them. The build
+also writes homepage Early Hints to `_headers`, retaining the credentials mode
+that Cloudflare’s automatic link extraction skips.
 
 The service worker precaches the homepage shell and caches other pages and static
 resources when visited. Previously visited pages work offline; an offline HTML

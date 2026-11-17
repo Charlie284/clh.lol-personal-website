@@ -1,15 +1,6 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  m as motion,
-  useScroll,
-  useTransform,
-  useSpring,
-  useMotionValue,
-  useReducedMotion,
-  MotionConfig,
-  LazyMotion,
-} from "framer-motion";
+import { MotionConfig, useReducedMotion } from "framer-motion";
 import Nav from "./Nav";
 import CommandPalette from "./CommandPalette";
 import AskAI from "./AskAI";
@@ -18,51 +9,17 @@ import PageErrorBoundary from "./PageErrorBoundary";
 const Cursor = lazy(() => import("./Cursor"));
 const InteractiveDots = lazy(() => import("./InteractiveDots"));
 
-// Motion enhances the already usable page after its critical resources finish.
-const loadAnimationFeatures = async () => {
-  if (document.readyState !== "complete") {
-    await new Promise<void>(resolve => window.addEventListener("load", () => resolve(), { once: true }));
-  }
-  return import("./animationFeatures").then(module => module.default).catch(() =>
-    // Keep the optional feature loader pending; the native page stays usable.
-    new Promise<never>(() => {}),
-  );
-};
-
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { scrollY, scrollYProgress } = useScroll();
   const prefersReducedMotion = useReducedMotion();
-
-  // Scroll progress bar — spring-smoothed so it glides instead of jumping.
-  const progressSpring = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 24,
-    restDelta: 0.001,
-  });
-
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+  const primaryBeam = useRef<HTMLDivElement>(null);
+  const secondaryBeam = useRef<HTMLDivElement>(null);
+  const spotlight = useRef<HTMLDivElement>(null);
+  const progressBar = useRef<HTMLDivElement>(null);
 
   const [isMobile, setIsMobile] = useState(false);
   const [pointerEffectsEnabled, setPointerEffectsEnabled] = useState(false);
   const previousPathname = useRef<string | null>(null);
-
-  const beamX = useTransform(scrollY, [0, 2000], ["-20%", "20%"]);
-
-  // Scroll-linked hue shift: the ambient beams drift through a restrained
-  // hue range (220 -> 280 -> 220) as the user scrolls. Black canvas stays
-  // black; only the light layers shift. Disabled under reduced motion.
-  const hueRange = prefersReducedMotion ? [220, 220, 220] : [220, 280, 220];
-  const beamHue = useTransform(scrollY, [0, 1500, 3000], hueRange);
-  const beamHue2 = useTransform(scrollY, [0, 1500, 3000], prefersReducedMotion ? [280, 280, 280] : [280, 220, 280]);
-
-  const beamColor = useTransform(beamHue, (h) => `oklch(60% 0.06 ${h} / 0.05)`);
-  const beamColor2 = useTransform(beamHue2, (h) => `oklch(65% 0.05 ${h} / 0.04)`);
-  const beamY2 = useTransform(scrollY, [0, 2000], ["10%", "-10%"]);
-
-  const spotlightX = useTransform(mouseX, (x) => x - 300);
-  const spotlightY = useTransform(mouseY, (y) => y - 300);
 
   // Check mobile status once on mount and on resize
   useEffect(() => {
@@ -119,43 +76,70 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => observer.disconnect();
   }, [location.pathname, location.hash]);
 
-  // Mouse move listener — throttled to one update per animation frame so
-  // the radial-gradient spotlight (which resamples on every set) doesn't
-  // run 200+ times/sec during fast mouse movement.
+  // Native transforms keep decoration out of the startup animation bundle.
   useEffect(() => {
-    if (isMobile) return;
-    let pending = false;
-    let lastEvent: MouseEvent | null = null;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      lastEvent = e;
-      if (pending) return;
-      pending = true;
-      requestAnimationFrame(() => {
-        pending = false;
-        if (lastEvent) {
-          mouseX.set(lastEvent.clientX);
-          mouseY.set(lastEvent.clientY);
-        }
-      });
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const y = window.scrollY;
+      const progress = Math.min(1, y / Math.max(1, document.documentElement.scrollHeight - window.innerHeight));
+      if (progressBar.current) progressBar.current.style.transform = `scaleX(${progress})`;
+      const drift = prefersReducedMotion ? 0 : Math.min(1, y / 2000);
+      const hue = prefersReducedMotion ? 220 : 220 + Math.max(0, 1 - Math.abs(y - 1500) / 1500) * 60;
+      if (primaryBeam.current) {
+        primaryBeam.current.style.transform = `translateX(${-20 + drift * 40}%) rotate(-12deg)`;
+        primaryBeam.current.style.background = `oklch(60% 0.06 ${hue} / 0.05)`;
+      }
+      if (secondaryBeam.current) {
+        secondaryBeam.current.style.transform = `translateY(${10 - drift * 20}%) rotate(8deg)`;
+        secondaryBeam.current.style.background = `oklch(65% 0.05 ${500 - hue} / 0.04)`;
+      }
     };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [prefersReducedMotion]);
 
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [isMobile, mouseX, mouseY]);
+  useEffect(() => {
+    if (isMobile || prefersReducedMotion) return;
+    let frame = 0;
+    const position = { x: -300, y: -300 };
+    const update = () => {
+      frame = 0;
+      if (spotlight.current) spotlight.current.style.transform = `translate(${position.x}px, ${position.y}px)`;
+    };
+    const move = (event: MouseEvent) => {
+      position.x = event.clientX - 300;
+      position.y = event.clientY - 300;
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("mousemove", move, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("mousemove", move);
+    };
+  }, [isMobile, prefersReducedMotion]);
 
   return (
-    <LazyMotion features={loadAnimationFeatures}><MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="user">
       <div className="fixed inset-0 z-0 pointer-events-none bg-[#020203] overflow-hidden text-white">
         {/* Primary ambient beam — drifts with scroll, hue shifts cool->warm->cool */}
-        <motion.div
-          style={{ x: beamX, background: beamColor }}
+        <div
+          ref={primaryBeam}
+          style={{ transform: "translateX(-20%) rotate(-12deg)", background: "oklch(60% 0.06 220 / 0.05)" }}
           className="absolute top-[-20%] left-[-20%] w-[140%] h-[60%] blur-[140px] -rotate-12"
         />
 
         {/* Secondary counter-drifting beam — opposite hue, opposite direction */}
-        <motion.div
-          style={{ y: beamY2, background: beamColor2 }}
+        <div
+          ref={secondaryBeam}
+          style={{ transform: "translateY(10%) rotate(8deg)", background: "oklch(65% 0.05 280 / 0.04)" }}
           className="absolute bottom-[-20%] right-[-20%] w-[120%] h-[50%] blur-[160px] rotate-[8deg]"
         />
 
@@ -164,11 +148,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {!isMobile && (
-          <motion.div
+          <div
+            ref={spotlight}
             className="absolute left-0 top-0 z-0 h-[600px] w-[600px] rounded-full will-change-transform"
             style={{
-              x: spotlightX,
-              y: spotlightY,
+              transform: "translate(-300px, -300px)",
               background:
                 "radial-gradient(circle, rgba(255,255,255,0.06), transparent 40%)",
             }}
@@ -189,9 +173,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <Nav />
 
       {/* Scroll progress bar — thin white line at the very top */}
-      <motion.div
+      <div
+        ref={progressBar}
         className="fixed left-0 right-0 top-0 z-[60] h-[2px] origin-left bg-white"
-        style={{ scaleX: progressSpring }}
+        style={{ transform: "scaleX(0)", transition: "transform 100ms ease-out" }}
         aria-hidden="true"
       />
 
@@ -222,6 +207,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </footer>
-    </MotionConfig></LazyMotion>
+    </MotionConfig>
   );
 }

@@ -106,6 +106,29 @@ for (const route of routes) {
       ];
   const content = await render(route.path);
   const html = setRenderedContent(addRoutePreloads(renderMetadata(template, route), route), content);
+  if (route.path === "/") {
+    // Cloudflare skips automatic Early Hints for crossorigin links. Explicit
+    // headers retain the font/module credentials mode and avoid stale hints.
+    const hints = [];
+    const activeHtml = html.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "");
+    for (const [tag] of activeHtml.matchAll(/<(?:link|script)\b[^>]+>/gi)) {
+      const attribute = name => tag.match(new RegExp(`\\b${name}=["']([^"']+)["']`, "i"))?.[1];
+      const href = attribute("href") ?? attribute("src");
+      if (!href?.startsWith("/assets/")) continue;
+      const rel = attribute("rel");
+      const module = rel === "modulepreload" || attribute("type") === "module";
+      const as = module ? "script" : rel === "stylesheet" ? "style" : attribute("as");
+      if (!module && rel !== "stylesheet" && rel !== "preload") continue;
+      const crossorigin = /\bcrossorigin\b/i.test(tag) ? "; crossorigin" : "";
+      hints.push(`<${href}>; rel=${module ? "modulepreload" : "preload"}; as=${as}${crossorigin}`);
+    }
+    const headersPath = path.join(distDir, "_headers");
+    const headers = await readFile(headersPath, "utf8").catch(error => {
+      if (error.code === "ENOENT") return "";
+      throw error;
+    });
+    await writeFile(headersPath, `${headers.trimEnd()}\n\n/\n  ! Link\n  Link: ${[...new Set(hints)].join(", ")}\n`, "utf8");
+  }
   for (const output of outputs) {
     await mkdir(path.dirname(output), { recursive: true });
     await writeFile(output, html, "utf8");

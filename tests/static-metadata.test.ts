@@ -69,6 +69,7 @@ it("preloads only the current route and its static dependencies in generated HTM
     mkdirSync(join(fixture, "dist/.vite"), { recursive: true });
     mkdirSync(join(fixture, ".prerender"));
     writeFileSync(join(fixture, "package.json"), JSON.stringify({ type: "module" }));
+    writeFileSync(join(fixture, "dist/_headers"), "/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n");
     writeFileSync(join(fixture, "dist/index.html"), '<html><head><title>Template</title><script type="module" src="/assets/app.js"></script><link rel="modulepreload" crossorigin href="/assets/shared.js"></head><body><div id="root"></div></body></html>');
     writeFileSync(join(fixture, "dist/.vite/manifest.json"), JSON.stringify({
       "index.html": { file: "assets/app.js", imports: ["shared"] },
@@ -93,6 +94,14 @@ it("preloads only the current route and its static dependencies in generated HTM
       export const render = () => "<h1>Fixture</h1>";
     `);
     execFileSync(process.execPath, [resolve("scripts/generate-static-metadata.mjs")], { cwd: fixture });
+
+    const headers = readFileSync(join(fixture, "dist/_headers"), "utf8");
+    expect(headers).toContain("/assets/*\n  Cache-Control: public, max-age=31536000, immutable");
+    expect(headers).toContain("/\n  ! Link\n  Link:");
+    expect(headers).toContain("</assets/home.js>; rel=modulepreload; as=script; crossorigin");
+    expect(headers).toContain("</assets/shared.js>; rel=modulepreload; as=script; crossorigin");
+    expect(headers).not.toContain("assets/other.js");
+    expect(headers).not.toContain("assets/fonts.css");
 
     const preloads = (file: string) => {
       const document = new DOMParser().parseFromString(readFileSync(join(fixture, "dist", file), "utf8"), "text/html");

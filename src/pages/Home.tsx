@@ -1,13 +1,5 @@
 import React, { useRef } from "react";
-import {
-  m as motion,
-  useMotionValue,
-  useScroll,
-  useSpring,
-  useTransform,
-  useReducedMotion,
-  type MotionValue,
-} from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { GithubIcon } from "../components/icons/GithubIcon";
@@ -39,9 +31,6 @@ const MagneticButton = ({
   className?: string;
 }) => {
   const ref = React.useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
   const [isMobile, setIsMobile] = React.useState(false);
   const prefersReducedMotion = useHydratedReducedMotion();
 
@@ -49,44 +38,35 @@ const MagneticButton = ({
     setIsMobile(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
-  const springConfig = prefersReducedMotion
-    ? { stiffness: 1000, damping: 100, mass: 0.1 }
-    : { stiffness: 150, damping: 15, mass: 0.1 };
-  const mouseX = useSpring(x, springConfig);
-  const mouseY = useSpring(y, springConfig);
-
+  const move = (x: number, y: number) => {
+    const element = ref.current?.parentElement;
+    if (!element) return;
+    element.style.setProperty("--magnetic-x", `${x}px`);
+    element.style.setProperty("--magnetic-y", `${y}px`);
+  };
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isMobile || prefersReducedMotion) return;
     const rect = ref.current?.getBoundingClientRect();
-    if (rect) {
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      x.set((e.clientX - centerX) * 0.35);
-      y.set((e.clientY - centerY) * 0.35);
-    }
+    if (rect) move((e.clientX - rect.left - rect.width / 2) * 0.35, (e.clientY - rect.top - rect.height / 2) * 0.35);
   };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
+  const handleMouseLeave = () => move(0, 0);
 
   const magneticEnabled = !isMobile && !prefersReducedMotion;
 
   const content = (
     <>
-      <motion.div
+      <div
         ref={ref}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{ x: magneticEnabled ? mouseX : 0, y: magneticEnabled ? mouseY : 0 }}
+        style={{ transform: "translate(var(--magnetic-x, 0px), var(--magnetic-y, 0px))", transition: "transform 350ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         className={`relative z-10 ${className}`}
       >
         {children}
-      </motion.div>
+      </div>
       {magneticEnabled && (
-        <motion.div
-          style={{ x: mouseX, y: mouseY }}
+        <div
+          style={{ transform: "translate(var(--magnetic-x, 0px), var(--magnetic-y, 0px))", transition: "transform 350ms cubic-bezier(0.22, 1, 0.36, 1)" }}
           className="absolute inset-0 bg-white/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"
         />
       )}
@@ -114,113 +94,62 @@ const MagneticButton = ({
 
 const heroNameLetters = Array.from("Charlie");
 
-function HeroLetter({
-  letter,
-  index,
-  pointerX,
-  interactive,
-}: {
-  letter: string;
-  index: number;
-  pointerX: MotionValue<number>;
-  interactive: boolean;
-}) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const depth = Math.sin(index / (heroNameLetters.length - 1) * Math.PI) * -60;
-  const letterCenter = (index + 0.5) / heroNameLetters.length - 0.5;
-
-  React.useEffect(() => {
-    const span = ref.current;
-    if (!span) return;
-    const update = (position: number) => {
-      const scale = interactive ? 1 + Math.max(-0.5, Math.min(0.5, position)) * 0.12 : 1;
-      const base = 1.15 - Math.min(0.5, Math.abs(position)) * 0.9;
-      const spot = Math.max(0, 1 - Math.abs(position - letterCenter) * 4);
-      span.style.transform = `translateZ(${depth}px) scale(${scale})`;
-      span.style.filter = `brightness(${interactive ? base + spot * 0.5 : 1})`;
-    };
-    update(pointerX.get());
-    return pointerX.on("change", update);
-  }, [depth, interactive, letterCenter, pointerX]);
-
-  return (
-    <span
-      ref={ref}
-      style={{ transform: `translateZ(${depth}px)`, transformStyle: "preserve-3d" }}
-      className="inline-block will-change-transform"
-    >
-      {letter}
-    </span>
-  );
-}
-
 function HeroName({ prefersReducedMotion }: { prefersReducedMotion: boolean | null }) {
   const ref = useRef<HTMLDivElement>(null);
   const [isTouch, setIsTouch] = React.useState(false);
-
-  // Pointer position relative to the hero name, normalized to [-0.5, 0.5].
-  const px = useMotionValue(0);
-  const py = useMotionValue(0);
 
   React.useEffect(() => {
     setIsTouch(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (isTouch || prefersReducedMotion) return;
-    const rect = ref.current?.getBoundingClientRect();
-    if (!rect) return;
-    px.set((e.clientX - rect.left) / rect.width - 0.5);
-    py.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
+  const updateLetters = React.useCallback((position: number) => {
+    const interactive = !isTouch && !prefersReducedMotion;
+    ref.current?.querySelectorAll<HTMLSpanElement>("[data-hero-letter]").forEach((span, index) => {
+      const depth = Math.sin(index / (heroNameLetters.length - 1) * Math.PI) * -60;
+      const center = (index + 0.5) / heroNameLetters.length - 0.5;
+      const scale = interactive ? 1 + Math.max(-0.5, Math.min(0.5, position)) * 0.12 : 1;
+      const brightness = 1.15 - Math.min(0.5, Math.abs(position)) * 0.9 + Math.max(0, 1 - Math.abs(position - center) * 4) * 0.5;
+      span.style.transform = `translateZ(${depth}px) scale(${scale})`;
+      span.style.filter = `brightness(${interactive ? brightness : 1})`;
+    });
+  }, [isTouch, prefersReducedMotion]);
 
-  const handlePointerLeave = () => {
-    px.set(0);
-    py.set(0);
-  };
-
-  const interactive = !isTouch && !prefersReducedMotion;
+  React.useEffect(() => updateLetters(0), [updateLetters]);
 
   return (
     <div
       ref={ref}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
+      onPointerMove={(event) => {
+        if (isTouch || prefersReducedMotion) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        updateLetters((event.clientX - rect.left) / rect.width - 0.5);
+      }}
+      onPointerLeave={() => updateLetters(0)}
       className="flex flex-col items-center select-none overflow-visible"
       style={{ perspective: 1000, zIndex: 10 }}
     >
-      {/* "Hi, I'm" — quiet italic kicker, no tilt */}
-      <motion.div
+      <div
         style={{ fontFamily: '"Charlie Kicker", Fraunces, Georgia, serif' }}
         className="font-hero text-[clamp(2rem,8vw,4.5rem)] italic text-white/55 leading-none mb-2"
       >
-        <motion.span
-          initial={false}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          Hi, I&rsquo;m
-        </motion.span>
-      </motion.div>
-
-      {/* "Charlie" — the star: per-letter 3D depth + cursor spotlight */}
-      <motion.h1
+        <span>Hi, I&rsquo;m</span>
+      </div>
+      <h1
         aria-label="Charlie"
         style={{ fontFamily: '"Charlie Name", Fraunces, Georgia, serif', fontWeight: 600 }}
         className="font-hero text-[clamp(3.5rem,15vw,12rem)] leading-[0.85] text-white relative"
       >
         <span className="flex items-baseline">
           {heroNameLetters.map((letter, index) => (
-            <HeroLetter
+            <span
               key={letter}
-              letter={letter}
-              index={index}
-              pointerX={px}
-              interactive={interactive}
-            />
+              data-hero-letter=""
+              style={{ transform: `translateZ(${Math.sin(index / (heroNameLetters.length - 1) * Math.PI) * -60}px)`, transformStyle: "preserve-3d" }}
+              className="inline-block will-change-transform"
+            >{letter}</span>
           ))}
         </span>
-      </motion.h1>
+      </h1>
     </div>
   );
 }
@@ -479,44 +408,45 @@ function HeroSection({
   subContent: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [isTouch, setIsTouch] = React.useState(false);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
+  const headline = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    const check = () => setIsTouch(window.matchMedia("(max-width: 640px), (pointer: coarse)").matches);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const showImmediately = Boolean(prefersReducedMotion || isTouch);
-
-  // Headline stays put, just recedes slightly.
-  const headlineY = useTransform(scrollYProgress, [0, 1], showImmediately ? [0, 0] : [0, -60]);
-  const headlineScale = useTransform(scrollYProgress, [0, 1], showImmediately ? [1, 1] : [1, 0.92]);
-  const headlineOpacity = useTransform(scrollYProgress, [0, 0.8], showImmediately ? [1, 1] : [1, 0]);
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      if (!ref.current || !headline.current) return;
+      const still = prefersReducedMotion || window.matchMedia("(max-width: 640px), (pointer: coarse)").matches;
+      const rect = ref.current.getBoundingClientRect();
+      const progress = still ? 0 : Math.min(1, Math.max(0, -rect.top / rect.height));
+      headline.current.style.transform = `translateY(${-60 * progress}px) scale(${1 - progress * 0.08})`;
+      headline.current.style.opacity = String(1 - Math.min(1, progress / 0.8));
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [prefersReducedMotion]);
 
   return (
     <div ref={ref} className="relative flex min-h-[min(42rem,85svh)] flex-col items-center justify-center overflow-visible px-6 pb-12 pt-28 md:px-24 md:pb-16 md:pt-32">
       {/* Headline — visible immediately, recedes on scroll */}
-      <motion.div
-        style={showImmediately ? { y: 0, scale: 1, opacity: 1 } : { y: headlineY, scale: headlineScale, opacity: headlineOpacity }}
+      <div
+        ref={headline}
         className="w-full max-w-[140rem] flex flex-col items-center will-change-transform overflow-visible"
       >
         {children}
-      </motion.div>
+      </div>
       {/* The value proposition should not require a scroll to discover. */}
-      <motion.div
-        initial={false}
-        animate={{ opacity: 1, y: 0 }}
-        transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.65, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      <div
         className="flex w-full max-w-[140rem] flex-col items-center"
       >
         {subContent}
-      </motion.div>
+      </div>
     </div>
   );
 }

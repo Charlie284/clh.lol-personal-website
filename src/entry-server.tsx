@@ -21,7 +21,7 @@ export { offlineMetadata, resolveMetadata, siteUrl } from "./lib/routeMetadata";
 
 // These are browser manifest IDs; only the requested route is preloaded.
 const pageModuleIds: Record<keyof typeof staticPageMetadata, string> = {
-  "/": "src/pages/Home.tsx",
+  "/": "index.html",
   "/projects": "src/pages/Projects.tsx",
   "/blog": "src/pages/BlogPage.tsx",
   "/privacy": "src/pages/Privacy.tsx",

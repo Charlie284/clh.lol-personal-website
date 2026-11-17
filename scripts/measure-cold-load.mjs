@@ -6,14 +6,15 @@ import { preview } from "vite";
 // Run on an otherwise idle machine; this is a manual performance budget check.
 const conditions = { offline: false, latency: 150, downloadThroughput: 200000, uploadThroughput: 100000 };
 const targetMs = 1000;
-const server = await preview({ preview: { host: "127.0.0.1", port: 0, strictPort: true, open: false } });
+const liveUrl = process.argv.find(argument => argument.startsWith("--url="))?.slice(6);
+const server = liveUrl ? null : await preview({ preview: { host: "127.0.0.1", port: 0, strictPort: true, open: false } });
 let browser;
 const results = [];
 
 try {
-  const address = server.httpServer.address();
-  if (!address || typeof address === "string") throw new Error("Missing preview address");
-  const origin = `http://127.0.0.1:${address.port}`;
+  const address = server?.httpServer.address();
+  if (!liveUrl && (!address || typeof address === "string")) throw new Error("Missing preview address");
+  const origin = liveUrl ?? `http://127.0.0.1:${address.port}`;
   browser = await chromium.launch();
   // Measure a new site visit, not the browser process's own first launch.
   // This page never requests the site; every measured context still has an
@@ -40,30 +41,40 @@ try {
         await cdp.send("Network.emulateNetworkConditions", conditions);
         await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
         await page.addInitScript(() => {
-          new MutationObserver((_, observer) => {
-            if (document.querySelector('[data-route-ready="true"]')) {
+          const fontsLoaded = () => ["Outfit", "Charlie Name", "Charlie Kicker"].every(name =>
+            [...document.fonts].some(font => font.family.replaceAll('"', "") === name && font.status === "loaded"),
+          );
+          const check = () => {
+            if (!window.routeReadyAt && document.querySelector('[data-route-ready="true"]')) {
               window.routeReadyAt = performance.now();
-              window.routeReadyFonts = ["Outfit", "Charlie Name", "Charlie Kicker"].every(name =>
-                [...document.fonts].some(font => font.family.replaceAll('"', "") === name && font.status === "loaded"),
-              );
-              observer.disconnect();
             }
-          }).observe(document, { childList: true, subtree: true, attributes: true });
+            if (window.routeReadyAt && !window.fontsReadyAt && fontsLoaded()) window.fontsReadyAt = performance.now();
+          };
+          new MutationObserver(check).observe(document, { childList: true, subtree: true, attributes: true });
+          document.fonts.addEventListener("loadingdone", check);
+          new PerformanceObserver(list => {
+            for (const entry of list.getEntries()) window.largestPaintAt = entry.startTime;
+          }).observe({ type: "largest-contentful-paint", buffered: true });
         });
         await page.goto(origin, { waitUntil: "domcontentloaded" });
-        await page.waitForFunction(() => window.routeReadyAt, undefined, { timeout: 10000 });
+        await page.waitForFunction(() => window.fontsReadyAt && window.largestPaintAt, undefined, { timeout: 10000 });
+        // Allow the buffered paint observer to report the initial viewport.
+        await page.waitForTimeout(150);
         const timing = await page.evaluate(() => ({
           interactiveMs: Math.round(window.routeReadyAt),
+          readyMs: Math.round(Math.max(window.routeReadyAt, window.fontsReadyAt, window.largestPaintAt)),
+          largestContentfulPaintMs: Math.round(window.largestPaintAt),
           htmlReadyMs: Math.round(performance.getEntriesByType("navigation")[0].responseEnd),
           resources: performance.getEntriesByType("resource").map(resource => ({
             file: resource.name.split("/").pop(),
+            initiator: resource.initiatorType,
             startMs: Math.round(resource.startTime),
             responseMs: Math.round(resource.responseStart),
             endMs: Math.round(resource.responseEnd),
             bytes: resource.transferSize,
           })),
           firstContentfulPaintMs: Math.round(performance.getEntriesByName("first-contentful-paint")[0]?.startTime ?? 0),
-          fontsLoaded: window.routeReadyFonts,
+          fontsLoaded: Boolean(window.fontsReadyAt),
           unexpectedFallbackFonts: performance.getEntriesByType("resource")
             .filter(resource => resource.startTime <= window.routeReadyAt && /-latin-.*\.woff2$/.test(resource.name))
             .map(resource => resource.name.split("/").pop()),
@@ -80,11 +91,11 @@ try {
       }
     }
   }
-  console.log(JSON.stringify({ targetMs, conditions, cpuSlowdown: 4, results }, null, 2));
-  if (results.some(result => result.interactiveMs >= targetMs || !result.fontsLoaded || result.unexpectedFallbackFonts.length || result.errors.length)) {
+  console.log(JSON.stringify({ url: origin, targetMs, conditions, cpuSlowdown: 4, results }, null, 2));
+  if (results.some(result => result.readyMs >= targetMs || !result.fontsLoaded || result.unexpectedFallbackFonts.length || result.errors.length)) {
     process.exitCode = 1;
   }
 } finally {
   await browser?.close();
-  await new Promise((resolve, reject) => server.httpServer.close(error => error ? reject(error) : resolve()));
+  if (server) await new Promise((resolve, reject) => server.httpServer.close(error => error ? reject(error) : resolve()));
 }

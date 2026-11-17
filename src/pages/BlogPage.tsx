@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useLayoutEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { formatBlogDate, getAllBlogPosts, parseBlogDate } from "../lib/blog";
 import { usePrerenderedSearchParams } from "../lib/usePrerenderedSearchParams";
@@ -53,7 +53,7 @@ export default function BlogPage() {
   }, [activeMenu]);
 
   // Close menus when clicking outside or pressing Escape.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handleClick = () => setActiveMenu(null);
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeMenu();

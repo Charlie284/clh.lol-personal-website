@@ -77,10 +77,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         codeSplitting: {
           groups: [{
-            name: "site-shared",
-            // Keep common site code together: small startup chunks otherwise
-            // add another request round on a cold HTTP/1 connection.
-            test: /\/src\/(?:data\/projects\.ts|components\/(?:RouteMeta|NewsletterSignup)\.tsx|lib\/routeMetadata\.ts)$/,
+            name: "startup",
+            // The initial route and shell share one compressed module. Other
+            // destinations stay dynamic, without fragmenting the first visit.
+            test: /\/src\/(?:main|pages\/Home)\.tsx$/,
           }],
         },
       },
