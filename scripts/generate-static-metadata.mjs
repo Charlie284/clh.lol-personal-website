@@ -108,7 +108,8 @@ for (const route of routes) {
   const html = setRenderedContent(addRoutePreloads(renderMetadata(template, route), route), content);
   if (route.path === "/") {
     // Cloudflare skips automatic Early Hints for crossorigin links. Explicit
-    // headers retain the font/module credentials mode and avoid stale hints.
+    // headers retain credentials and use preload, which its 103 cache accepts.
+    // The HTML keeps modulepreload so scripts also receive module compilation.
     const hints = [];
     const activeHtml = html.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "");
     for (const [tag] of activeHtml.matchAll(/<(?:link|script)\b[^>]+>/gi)) {
@@ -120,7 +121,7 @@ for (const route of routes) {
       const as = module ? "script" : rel === "stylesheet" ? "style" : attribute("as");
       if (!module && rel !== "stylesheet" && rel !== "preload") continue;
       const crossorigin = /\bcrossorigin\b/i.test(tag) ? "; crossorigin" : "";
-      hints.push(`<${href}>; rel=${module ? "modulepreload" : "preload"}; as=${as}${crossorigin}`);
+      hints.push(`<${href}>; rel=preload; as=${as}${crossorigin}`);
     }
     const headersPath = path.join(distDir, "_headers");
     const headers = await readFile(headersPath, "utf8").catch(error => {

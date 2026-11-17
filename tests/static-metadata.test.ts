@@ -98,8 +98,8 @@ it("preloads only the current route and its static dependencies in generated HTM
     const headers = readFileSync(join(fixture, "dist/_headers"), "utf8");
     expect(headers).toContain("/assets/*\n  Cache-Control: public, max-age=31536000, immutable");
     expect(headers).toContain("/\n  ! Link\n  Link:");
-    expect(headers).toContain("</assets/home.js>; rel=modulepreload; as=script; crossorigin");
-    expect(headers).toContain("</assets/shared.js>; rel=modulepreload; as=script; crossorigin");
+    expect(headers).toContain("</assets/home.js>; rel=preload; as=script; crossorigin");
+    expect(headers).toContain("</assets/shared.js>; rel=preload; as=script; crossorigin");
     expect(headers).not.toContain("assets/other.js");
     expect(headers).not.toContain("assets/fonts.css");
 
