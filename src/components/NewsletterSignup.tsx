@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { trackNewsletterSubmission, type NewsletterSource } from "../lib/analytics";
 import {
   hasConfirmedNewsletterSubscription,
   subscribeToNewsletterPreference,
@@ -8,7 +9,7 @@ import {
 
 type NewsletterSignupProps = {
   className?: string;
-  source: "home" | "blog" | "article";
+  source: NewsletterSource;
 };
 
 export const newsletterFormAction =
@@ -57,6 +58,9 @@ export default function NewsletterSignup({
             action={newsletterFormAction}
             method="post"
             data-newsletter-source={source}
+            onSubmit={(event) => {
+              if (event.currentTarget.checkValidity()) trackNewsletterSubmission(source);
+            }}
           >
             <label
               htmlFor={emailId}

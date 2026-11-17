@@ -59,7 +59,10 @@ function dispatchPreferenceEvent(name: string) {
 
 export function getCookieConsentChoice(): CookieConsentChoice | null {
   const choice = readCookie(cookieConsentCookie);
-  return choice === "allow" || choice === "deny" ? choice : null;
+  // The original grant explicitly excluded analytics. Renew it before using
+  // the expanded choice; an existing refusal still means no.
+  if (choice === "allow-v2") return "allow";
+  return choice === "deny" ? "deny" : null;
 }
 
 export function hasCookieConsent() {
@@ -70,7 +73,7 @@ export function setCookieConsentChoice(
   choice: CookieConsentChoice,
   now = Date.now(),
 ) {
-  writeCookie(cookieConsentCookie, choice);
+  writeCookie(cookieConsentCookie, choice === "allow" ? "allow-v2" : "deny");
 
   if (choice === "allow") {
     deleteCookie(legacyNewsletterSignupCookie);

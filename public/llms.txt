@@ -262,7 +262,7 @@ Its implementation includes:
 - Custom page transitions
 - Shared metadata components
 
-The website uses limited first-party cookies to remember consent and newsletter-related choices. It uses Cloudflare Web Analytics for aggregate traffic and performance reports, without analytics cookies, advertising identifiers, or cross-site tracking. Newsletter delivery is handled by Kit, which may record opens and link clicks. See the [privacy page](https://clh.lol/privacy) for the current details.
+The website uses limited first-party cookies to remember consent and newsletter-related choices. It uses Cloudflare Web Analytics for aggregate traffic and performance reports. Only after the current consent choice is allowed, PostHog counts project clicks and newsletter form submissions, with no email addresses, persistent analytics storage, session replay, autocapture, or automatic pageviews. Newsletter delivery is handled by Kit, which may record opens and link clicks. See the [privacy page](https://clh.lol/privacy) for the current details.
 
 The site should not be treated as a static résumé. It is an active project and may change as Charlie redesigns sections, adds work, or revises how projects are presented.
 

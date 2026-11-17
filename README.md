@@ -77,6 +77,42 @@ cross-site tracking. For the Pages project, enable it under **Metrics → Web
 Analytics**. Cloudflare injects the beacon on the next deployment; no analytics
 token belongs in this repository.
 
+PostHog sends only `project_clicked` (the homepage's project links and the
+project listing) and `newsletter_submitted` (valid native Kit form submissions,
+with the home/blog/article placement). A submission does not prove the reader
+confirmed their subscription. Both events require the current **Allow cookies**
+choice. The earlier newsletter-only consent is renewed because it excluded
+analytics. Declining consent stops future events; earlier actions are never
+queued for later consent.
+
+Events use PostHog's public capture API directly, with no analytics SDK or
+extensions. There is no session replay, autocapture, automatic pageview/pageleave,
+error/performance capture, or feature flag polling. A random page-load identifier
+stays in memory, with no PostHog cookies, browser storage, or personal profiles.
+The payload contains only the public project token, identifier, timestamp, event
+name, page path (without query/hash), project title/destination or form placement,
+and the disabled-person-profile marker. Requests omit cookies and referrer
+headers, and use `keepalive` so the native Kit POST stays intact. Nothing is
+buffered or retried after consent changes.
+
+For local production builds, copy `.env.example` to `.env.local` and set
+`VITE_POSTHOG_PROJECT_TOKEN` and `VITE_POSTHOG_HOST` from PostHog project **412907**.
+The local env file is ignored by Git. Development builds and builds without
+both values send nothing to PostHog.
+
+In **Cloudflare Pages → Settings → Variables and Secrets**, add those same two
+build variables to the production environment before the next deployment.
+Use the project's public SDK token, never a personal API key; the US ingestion
+host is `https://us.i.posthog.com`. The token is intentionally public in the
+browser bundle. Preview builds can omit the variables to keep test traffic out
+of production reports. The CSP permits only the US ingestion host; no PostHog
+scripts are loaded.
+
+CI builds with a dummy project token, and the analytics browser tests intercept
+PostHog requests and the Kit POST without sending a real subscription. For the
+same setup locally, pass `VITE_POSTHOG_PROJECT_TOKEN=phc_browser_tests` and
+`VITE_POSTHOG_HOST=https://us.i.posthog.com` when running `npm run test:e2e`.
+
 ## Newsletter confirmation
 
 The signup forms post directly to Kit and don't treat a submitted form as a

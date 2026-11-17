@@ -59,7 +59,7 @@ test("inline article links keep the original archive search", async ({ page }) =
 });
 
 test("newsletter preference is explicit, consented, and survives reloads", async ({ page, context, baseURL }) => {
-  await context.addCookies([{ name: "clh_cookie_choice", value: "allow", url: baseURL! }]);
+  await context.addCookies([{ name: "clh_cookie_choice", value: "allow-v2", url: baseURL! }]);
   await openPage(page, "/newsletter-confirmed");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Thanks for reading.");
   await expect(page.getByText(/Cookies are allowed/)).toBeVisible();
@@ -103,7 +103,7 @@ test("command arrows continue moving focus after Tab reaches the options", async
 test("returning-visitor notice stays clear of Ask AI on mobile", async ({ page, context, baseURL }) => {
   for (const width of [320, 390]) {
     await context.addCookies([
-      { name: "clh_cookie_choice", value: "allow", url: baseURL! },
+      { name: "clh_cookie_choice", value: "allow-v2", url: baseURL! },
       { name: "clh_newsletter_last_visit", value: String(Date.now() - 91 * 24 * 60 * 60 * 1000), url: baseURL! },
     ]);
     await page.setViewportSize({ width, height: 844 });

@@ -202,7 +202,7 @@ test("returning visitors hydrate cleanly with saved preferences", async ({
   await context.addCookies([
     {
       name: "clh_cookie_choice",
-      value: "allow",
+      value: "allow-v2",
       url: "http://127.0.0.1:43127",
     },
     {

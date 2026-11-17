@@ -7,6 +7,7 @@ import NewsletterNotice from "../components/NewsletterNotice";
 import NewsletterSignup from "../components/NewsletterSignup";
 import RouteMeta from "../components/RouteMeta";
 import { projectsList } from "../data/projects";
+import { trackProjectClick } from "../lib/analytics";
 import {
   hasConfirmedNewsletterSubscription,
   subscribeToNewsletterPreference,
@@ -76,6 +77,7 @@ const MagneticButton = ({
   return to.startsWith("http") ? (
     <a
       href={to}
+      onClick={() => trackProjectClick(to)}
       target="_blank"
       rel="noopener noreferrer"
       data-snap="true"
@@ -84,7 +86,7 @@ const MagneticButton = ({
       {content}
     </a>
   ) : (
-    <Link to={to} data-snap="true" className="relative group">
+    <Link to={to} onClick={() => trackProjectClick(to)} data-snap="true" className="relative group">
       {content}
     </Link>
   );
@@ -315,7 +317,9 @@ function FeaturedWorkSection({
                       if (!selected && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
                         event.preventDefault();
                         selectProject(index);
+                        return;
                       }
+                      trackProjectClick(item.href);
                     }}
                     style={{
                       zIndex: selected ? 3 : 1,
@@ -368,7 +372,7 @@ function FeaturedWorkSection({
               <div aria-live="polite" aria-atomic="true" className="min-w-0">
                 <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-white/60">{project.kicker}</p>
                 <h3 className="font-serif text-3xl uppercase leading-tight sm:text-4xl">
-                  <Link to={project.href} target={project.external ? "_blank" : undefined} rel={project.external ? "noopener noreferrer" : undefined} className="inline-flex items-center gap-3 hover:text-white/75">
+                  <Link to={project.href} onClick={() => trackProjectClick(project.href)} target={project.external ? "_blank" : undefined} rel={project.external ? "noopener noreferrer" : undefined} className="inline-flex items-center gap-3 hover:text-white/75">
                     {project.title}<ArrowUpRight size={24} aria-hidden="true" />
                   </Link>
                 </h3>
@@ -511,6 +515,7 @@ function SystemViewSection({
           <Link
             key={group.id}
             to={group.href}
+            onClick={() => trackProjectClick(group.href)}
             className="group grid gap-5 py-8 sm:py-10 md:grid-cols-2 md:items-start md:gap-x-10 2xl:grid-cols-[minmax(0,0.7fr)_minmax(0,1.1fr)_minmax(0,1fr)_12rem] 2xl:items-center"
             aria-label={`Open ${group.project}`}
           >

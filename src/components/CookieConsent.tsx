@@ -48,8 +48,9 @@ export default function CookieConsent() {
               Can I remember this browser?
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
-              Two cookies remember newsletter visits and subscriptions so prompts
-              don’t repeat. No ads, analytics, or tracking across sites.
+              Allow cookies to remember newsletter preferences and send project
+              clicks and newsletter form submissions to PostHog. No email
+              addresses, session recordings, or tracking across sites.
             </p>
             <Link
               to="/privacy"

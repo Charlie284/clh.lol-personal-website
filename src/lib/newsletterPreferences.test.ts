@@ -53,6 +53,18 @@ describe("newsletter preferences", () => {
     expect(document.cookie).not.toContain("clh_newsletter_last_visit");
   });
 
+  it("requires renewed consent for the earlier newsletter-only grant", () => {
+    document.cookie = "clh_cookie_choice=allow; Path=/";
+    expect(getCookieConsentChoice()).toBeNull();
+
+    setCookieConsentChoice("allow");
+    expect(getCookieConsentChoice()).toBe("allow");
+    expect(document.cookie).toContain("clh_cookie_choice=allow-v2");
+
+    document.cookie = "clh_cookie_choice=deny; Path=/";
+    expect(getCookieConsentChoice()).toBe("deny");
+  });
+
   it("waits until 90 days have passed since the previous visit", () => {
     const firstVisit = Date.UTC(2026, 0, 1);
     setCookieConsentChoice("allow", firstVisit);

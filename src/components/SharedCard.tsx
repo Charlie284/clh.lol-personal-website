@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { trackProjectClick } from "../lib/analytics";
 
 type SharedCardItem = {
   title: string;
@@ -58,14 +59,15 @@ export default function SharedCard({ item, projectsReturnTo }: { item: SharedCar
   );
   const className = `group grid gap-5 py-7 sm:py-8 md:gap-8 ${item.img ? "md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)_10rem]" : "md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] md:pr-[12rem]"}`;
 
-  if (!item.href) {
+  const href = item.href;
+  if (!href) {
     return <article className={className}>{content}</article>;
   }
 
-  return item.href.startsWith("/") ? (
-    <Link to={item.href} state={projectsReturnTo ? { projectsReturnTo } : undefined} className={className}>{content}</Link>
+  return href.startsWith("/") ? (
+    <Link to={href} onClick={() => trackProjectClick(href)} state={projectsReturnTo ? { projectsReturnTo } : undefined} className={className}>{content}</Link>
   ) : (
-    <a href={item.href} target={item.target} rel={item.target ? "noopener noreferrer" : undefined} className={className}>
+    <a href={href} onClick={() => trackProjectClick(href)} target={item.target} rel={item.target ? "noopener noreferrer" : undefined} className={className}>
       {content}
     </a>
   );

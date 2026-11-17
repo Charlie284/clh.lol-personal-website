@@ -20,7 +20,7 @@ test.beforeEach(async ({ context, baseURL }) => {
 });
 
 test("hiding signup prompts applies when returning home without reloading", async ({ page, context, baseURL }) => {
-  await context.addCookies([{ name: "clh_cookie_choice", value: "allow", url: baseURL! }]);
+  await context.addCookies([{ name: "clh_cookie_choice", value: "allow-v2", url: baseURL! }]);
   await openPage(page, "/newsletter-confirmed");
   await page.getByRole("button", { name: "Hide signup prompts", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Signup prompts are hidden.");

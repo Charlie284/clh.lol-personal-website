@@ -81,6 +81,26 @@ export default function Privacy() {
             read and to catch performance problems.
           </p>
 
+          <h2>Optional interaction analytics</h2>
+          <p>
+            If you allow cookies, I also use PostHog to count project link clicks
+            and valid newsletter form submissions. Those are the only PostHog
+            events this site sends. A submission is not proof of a confirmed Kit
+            subscription. PostHog receives the page path and either the project
+            title and destination or the form placement (home, blog, or article).
+            It does not receive your email address, form contents, URL query
+            strings, or referring URL.
+          </p>
+          <p>
+            PostHog uses a random identifier held in memory for the current page
+            load, with no persistent analytics cookies or browser storage and no
+            personal profiles. Session replay, autocapture, automatic pageviews,
+            and other automatic collection are disabled. Declining cookies stops
+            future PostHog events. Visits and actions before consent are not
+            recorded later. An older choice that excluded analytics requires new
+            consent before any PostHog events are sent.
+          </p>
+
           <h2>Newsletter preference cookies</h2>
           <p>
             If you allow cookies, I use two first-party cookies to avoid showing
@@ -99,7 +119,8 @@ export default function Privacy() {
           </p>
           <p>
             One separate necessary cookie remembers whether you chose Allow
-            cookies or No thanks, so I do not ask on every visit. It can also
+            cookies (newsletter preferences and the two PostHog events) or No
+            thanks, so I do not ask on every visit. It can also
             last up to 400 days. Choosing No thanks removes the two newsletter
             preference cookies.
           </p>
@@ -145,7 +166,7 @@ export default function Privacy() {
           </p>
 
           <p>
-            I last updated this page on October 12, 2026. I will update it if the
+            I last updated this page on November 16, 2026. I will update it if the
             site starts collecting anything meaningfully different.
           </p>
         </div>

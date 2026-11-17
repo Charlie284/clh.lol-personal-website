@@ -125,7 +125,7 @@ test("tablet featured cards stay inside the section gutters", async ({ page }) =
 test("mobile privacy choices remain reachable with or without newsletter content", async ({ page, context, baseURL }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await context.addCookies([
-    { name: "clh_cookie_choice", value: "allow", url: baseURL! },
+    { name: "clh_cookie_choice", value: "allow-v2", url: baseURL! },
     { name: "clh_newsletter_subscription_confirmed", value: "1", url: baseURL! },
   ]);
   for (const path of ["/", "/projects/startle"]) {
